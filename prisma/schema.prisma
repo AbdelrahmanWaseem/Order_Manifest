@@ -1,0 +1,74 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Batch {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  status    String   @default("active") // active, archived, completed
+
+  orders    Order[]
+  reports   Report[]
+
+  @@map("batches")
+}
+
+model Order {
+  id               String      @id @default(cuid())
+  shopifyOrderId   String?
+  shopifyOrderName String
+  customer         String
+  customerEmail    String?
+  batchId          String
+  batch            Batch       @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  items            OrderItem[]
+
+  @@index([batchId])
+  @@index([shopifyOrderName])
+  @@map("orders")
+}
+
+model OrderItem {
+  id                String   @id @default(cuid())
+  orderId           String
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  shopifyLineItemId String?
+  shopifyVariantId  String?
+  shopifyProductId  String?
+  name              String
+  brand             String
+  size              String
+  sku               String
+  quantity          Int      @default(1)
+  inventoryQuantity Int?
+  status            String   @default("pending") // pending, ready, incoming, missing
+  note              String   @default("")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([sku])
+  @@map("order_items")
+}
+
+model Report {
+  id         String   @id // e.g. r1729000000000 or custom
+  createdAt  DateTime @default(now())
+  orderCount Int
+  itemCount  Int
+  batchId    String?
+  batch      Batch?   @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  snapshot   Json
+
+  @@index([createdAt])
+  @@map("reports")
+}

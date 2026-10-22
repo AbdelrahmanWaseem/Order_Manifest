@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink-night: #14151a;
+  --ink-night-2: #1b1c22;
+  --ink-rule: #33343d;
+  --paper: #ece3cd;
+  --paper-2: #e2d7ba;
+  --paper-rule: #c8bb95;
+  --ink-dark: #2a2317;
+  --ink-soft: #6b6250;
+  --stamp-ready: #2f6b4f;
+  --stamp-incoming: #3a5f8a;
+  --stamp-missing: #a4392f;
+  --stamp-pending: #c98a2b;
+  --cream: #f3ede0;
+}
+
+body {
+  background-color: var(--ink-night);
+  color: var(--cream);
+  font-family: var(--font-sans), 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-mono {
+  font-family: var(--font-mono), 'IBM Plex Mono', monospace;
+}
+
+/* Paper Ticket Styling */
+.ticket {
+  position: relative;
+  background: var(--paper);
+  color: var(--ink-dark);
+  border-radius: 3px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 27px,
+    var(--paper-rule) 27px 28px
+  );
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ticket:hover {
+  box-shadow: 0 5px 14px rgba(0,0,0,0.45);
+}
+
+.ticket::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  background-image: radial-gradient(circle, var(--ink-night) 2.6px, transparent 2.7px);
+  background-size: 8px 12px;
+  background-position: -4px 0;
+  z-index: 5;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--ink-night);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--ink-rule);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #5a5847;
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background: #fff !important;
+    color: #14151a !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .report-doc {
+    display: block !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+  }
+  .order-card {
+    page-break-inside: avoid;
+  }
+}

@@ -1,0 +1,70 @@
+'use client';
+
+import React from 'react';
+import { ItemStatus } from '@/types/manifest';
+import { LogOut } from 'lucide-react';
+
+interface TopBarProps {
+  counts: Record<ItemStatus, number>;
+  activeFilter: ItemStatus | null;
+  onToggleFilter: (status: ItemStatus) => void;
+}
+
+export default function TopBar({
+  counts,
+  activeFilter,
+  onToggleFilter,
+}: TopBarProps) {
+  const chips: Array<{ key: ItemStatus; label: string; color: string }> = [
+    { key: 'pending', label: 'Pending', color: '#c98a2b' },
+    { key: 'ready', label: 'Ready', color: '#2f6b4f' },
+    { key: 'incoming', label: 'Incoming', color: '#3a5f8a' },
+    { key: 'missing', label: 'Missing', color: '#a4392f' },
+  ];
+
+  return (
+    <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-ink-rule pb-4 mb-6 gap-4">
+      <div>
+        <div className="font-mono text-[11px] tracking-[0.14em] uppercase text-stamp-pending mb-1">
+          Essentials EG — Ops
+        </div>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-cream">
+            Order Manifest
+          </h1>
+          <span className="text-xs font-mono px-2 py-0.5 rounded bg-ink-night-2 border border-ink-rule text-stone-400">
+            Shopify Live
+          </span>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap">
+          {chips.map(({ key, label, color }) => {
+            const isActive = activeFilter === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => onToggleFilter(key)}
+                className={`font-mono text-xs px-2.5 py-1.5 rounded-[3px] border flex items-center gap-2 transition cursor-pointer ${
+                  isActive
+                    ? 'bg-ink-night border-cream text-cream shadow-sm'
+                    : 'bg-ink-night-2 border-ink-rule hover:border-stone-500 text-stone-300'
+                }`}
+                title={`Filter board by ${label}`}
+              >
+                <span
+                  className="w-1.5 h-1.5 rounded-full shrink-0"
+                  style={{ backgroundColor: color }}
+                />
+                <span>{label}</span>
+                <b className="text-[13px] text-cream">{counts[key]}</b>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
