@@ -23,7 +23,9 @@ export default function ImportSection({
 
   // Browse mode state
   const [recentOrders, setRecentOrders] = useState<ShopifyOrderSummary[]>([]);
+  const [defaultOrders, setDefaultOrders] = useState<ShopifyOrderSummary[]>([]);
   const [browseLoading, setBrowseLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [browseError, setBrowseError] = useState<string | null>(null);
   const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,16 +33,25 @@ export default function ImportSection({
   const [pageInfo, setPageInfo] = useState<{ hasNextPage: boolean; endCursor?: string | null }>({
     hasNextPage: false,
   });
+  const [defaultPageInfo, setDefaultPageInfo] = useState<{ hasNextPage: boolean; endCursor?: string | null }>({
+    hasNextPage: false,
+  });
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load recent orders when browse tab is active
   const loadRecentOrders = async (cursor: string | null = null, query: string = '') => {
-    setBrowseLoading(true);
+    const isSearch = Boolean(query.trim());
+    if (isSearch) {
+      setSearchLoading(true);
+    } else {
+      setBrowseLoading(true);
+    }
     setBrowseError(null);
     try {
       const params = new URLSearchParams();
-      params.set('first', '10');
+      params.set('first', '25');
       if (cursor) params.set('after', cursor);
       if (query.trim()) params.set('query', query.trim());
 
@@ -51,16 +62,26 @@ export default function ImportSection({
         throw new Error(data.error || 'Failed to fetch Shopify orders');
       }
 
-      setRecentOrders(data.orders || []);
-      setPageInfo({
+      const fetchedOrders: ShopifyOrderSummary[] = data.orders || [];
+      const fetchedPageInfo = {
         hasNextPage: data.pageInfo?.hasNextPage || false,
         endCursor: data.pageInfo?.endCursor || null,
-      });
+      };
+
+      setRecentOrders(fetchedOrders);
+      setPageInfo(fetchedPageInfo);
       setPageCursor(cursor);
+
+      // Cache as default orders when fetching without a search filter
+      if (!isSearch && !cursor) {
+        setDefaultOrders(fetchedOrders);
+        setDefaultPageInfo(fetchedPageInfo);
+      }
     } catch (err: any) {
       setBrowseError(err.message || 'Error communicating with Shopify Admin API');
     } finally {
       setBrowseLoading(false);
+      setSearchLoading(false);
     }
   };
 
@@ -70,8 +91,61 @@ export default function ImportSection({
     }
   }, [activeTab]);
 
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Instant live search as user types + instantaneous return to all orders when cleared
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    const trimmed = val.trim();
+
+    // When the input is deleted/cleared: immediately restore full list of orders
+    if (!trimmed) {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+      setSearchLoading(false);
+      if (defaultOrders.length > 0) {
+        setRecentOrders(defaultOrders);
+        setPageInfo(defaultPageInfo);
+      } else {
+        loadRecentOrders(null, '');
+      }
+      return;
+    }
+
+    // Instant local preview for zero-latency if matched in current/default orders
+    const cleanTerm = trimmed.replace(/^#/, '').toLowerCase();
+    const sourceList = defaultOrders.length > 0 ? defaultOrders : recentOrders;
+    const localMatches = sourceList.filter((o) => {
+      const oNum = o.name.replace(/^#/, '').toLowerCase();
+      const cName = o.customer.toLowerCase();
+      return (
+        oNum.includes(cleanTerm) ||
+        cName.includes(cleanTerm) ||
+        o.name.toLowerCase().includes(trimmed.toLowerCase())
+      );
+    });
+
+    if (localMatches.length > 0) {
+      setRecentOrders(localMatches);
+    }
+
+    // Debounce live Shopify API query (250ms) to find any order across store
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    setSearchLoading(true);
+    searchTimeoutRef.current = setTimeout(() => {
+      loadRecentOrders(null, trimmed);
+    }, 250);
+  };
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
     loadRecentOrders(null, searchQuery);
   };
 
@@ -251,18 +325,32 @@ export default function ImportSection({
                 type="text"
                 placeholder="Search recent orders by customer, order #, or email…"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-ink-night border border-ink-rule rounded px-3 py-1.5 pl-8 text-xs text-cream placeholder-stone-500 focus:outline-none focus:border-stamp-pending"
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="w-full bg-ink-night border border-ink-rule rounded px-3 py-1.5 pl-8 pr-8 text-xs text-cream placeholder-stone-500 focus:outline-none focus:border-stamp-pending"
               />
               <Search className="w-3.5 h-3.5 text-stone-500 absolute left-2.5 top-2.5" />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => handleSearchChange('')}
+                  className="absolute right-2.5 top-2 text-stone-400 hover:text-cream text-xs font-mono"
+                  title="Clear search and return to all orders"
+                >
+                  ✕
+                </button>
+              )}
             </div>
             <button
               type="submit"
-              disabled={browseLoading}
+              disabled={browseLoading || searchLoading}
               className="bg-ink-night hover:bg-stone-800 text-stone-300 border border-ink-rule px-3 py-1.5 text-xs rounded font-medium flex items-center gap-1.5 transition cursor-pointer"
             >
-              {browseLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-              <span>Search</span>
+              {browseLoading || searchLoading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-stamp-pending" />
+              ) : (
+                <RefreshCw className="w-3.5 h-3.5" />
+              )}
+              <span>{searchLoading ? 'Searching…' : 'Search'}</span>
             </button>
           </form>
 
@@ -275,10 +363,10 @@ export default function ImportSection({
 
           {/* Orders list */}
           <div className="border border-ink-rule rounded bg-ink-night overflow-hidden max-h-80 overflow-y-auto">
-            {browseLoading && recentOrders.length === 0 ? (
+            {(browseLoading || searchLoading) && recentOrders.length === 0 ? (
               <div className="p-8 text-center text-xs text-stone-400 flex items-center justify-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin text-stamp-pending" />
-                <span>Loading recent orders from Shopify…</span>
+                <span>{searchLoading ? 'Searching Shopify for matching orders…' : 'Loading recent orders from Shopify…'}</span>
               </div>
             ) : recentOrders.length === 0 ? (
               <div className="p-8 text-center text-xs text-stone-500">
