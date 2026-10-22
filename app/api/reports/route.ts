@@ -53,21 +53,20 @@ export async function GET() {
       },
     });
 
-    if (reports && reports.length > 0) {
-      return NextResponse.json({ reports });
-    }
+    // If the database query succeeded, return the real database state (including empty [])
+    return NextResponse.json({ reports: reports || [] });
   } catch (err: any) {
-    // DB not available, fall back to local disk archive
+    // Only if DB connection fails/throws, fall back to local disk archive
+    console.warn('Database query failed, falling back to local disk archive:', err);
+    const localReports = listLocalReports().map((r) => ({
+      id: r.id,
+      createdAt: r.createdAt,
+      orderCount: r.orderCount,
+      itemCount: r.itemCount,
+    }));
+
+    return NextResponse.json({ reports: localReports });
   }
-
-  const localReports = listLocalReports().map((r) => ({
-    id: r.id,
-    createdAt: r.createdAt,
-    orderCount: r.orderCount,
-    itemCount: r.itemCount,
-  }));
-
-  return NextResponse.json({ reports: localReports });
 }
 
 export async function POST(req: NextRequest) {
