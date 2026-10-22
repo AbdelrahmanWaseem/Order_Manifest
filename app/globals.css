@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+:root, html.dark {
   --ink-night: #14151a;
   --ink-night-2: #1b1c22;
   --ink-rule: #33343d;
@@ -18,11 +18,73 @@
   --cream: #f3ede0;
 }
 
+html.light {
+  --ink-night: #f4f5f8;
+  --ink-night-2: #ffffff;
+  --ink-rule: #e2e4ea;
+  --paper: #ffffff;
+  --paper-2: #f4f1e8;
+  --paper-rule: #e6dfcf;
+  --ink-dark: #191a20;
+  --ink-soft: #636159;
+  --stamp-ready: #1f6e4a;
+  --stamp-incoming: #2d5584;
+  --stamp-missing: #b9382d;
+  --stamp-pending: #b87b1e;
+  --cream: #14151b;
+}
+
 body {
   background-color: var(--ink-night);
   color: var(--cream);
   font-family: var(--font-sans), 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* Light mode overrides for text contrast and borders */
+html.light .text-stone-300 {
+  color: #3f3f46 !important;
+}
+html.light .text-stone-400 {
+  color: #52525b !important;
+}
+html.light .text-stone-500 {
+  color: #71717a !important;
+}
+html.light .bg-stone-800 {
+  background-color: #e4e4e7 !important;
+  color: #27272a !important;
+}
+html.light .bg-stone-900 {
+  background-color: #f4f4f5 !important;
+}
+html.light .bg-stone-900\/60 {
+  background-color: #f4f4f5 !important;
+}
+html.light .hover\:bg-stone-900\/60:hover {
+  background-color: #ececee !important;
+}
+html.light .hover\:bg-stone-800:hover {
+  background-color: #e4e4e7 !important;
+}
+html.light input,
+html.light textarea {
+  color: #18181b !important;
+}
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #9ca3af !important;
+}
+html.light .ticket {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+html.light .ticket:hover {
+  box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+}
+html.light .report-doc {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  border: 1px solid #e2e4ea;
 }
 
 .font-mono {

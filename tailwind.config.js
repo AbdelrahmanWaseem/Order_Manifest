@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: 'class',
   content: [
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -8,19 +9,19 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'ink-night': '#14151a',
-        'ink-night-2': '#1b1c22',
-        'ink-rule': '#33343d',
-        'paper': '#ece3cd',
-        'paper-2': '#e2d7ba',
-        'paper-rule': '#c8bb95',
-        'ink-dark': '#2a2317',
-        'ink-soft': '#6b6250',
-        'stamp-ready': '#2f6b4f',
-        'stamp-incoming': '#3a5f8a',
-        'stamp-missing': '#a4392f',
-        'stamp-pending': '#c98a2b',
-        'cream': '#f3ede0',
+        'ink-night': 'var(--ink-night)',
+        'ink-night-2': 'var(--ink-night-2)',
+        'ink-rule': 'var(--ink-rule)',
+        'paper': 'var(--paper)',
+        'paper-2': 'var(--paper-2)',
+        'paper-rule': 'var(--paper-rule)',
+        'ink-dark': 'var(--ink-dark)',
+        'ink-soft': 'var(--ink-soft)',
+        'stamp-ready': 'var(--stamp-ready)',
+        'stamp-incoming': 'var(--stamp-incoming)',
+        'stamp-missing': 'var(--stamp-missing)',
+        'stamp-pending': 'var(--stamp-pending)',
+        'cream': 'var(--cream)',
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],

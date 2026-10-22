@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ItemStatus } from '@/types/manifest';
-import { LogOut } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 
 interface TopBarProps {
   counts: Record<ItemStatus, number>;
@@ -15,6 +15,33 @@ export default function TopBar({
   activeFilter,
   onToggleFilter,
 }: TopBarProps) {
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light' || document.documentElement.classList.contains('light')) {
+      setTheme('light');
+    } else {
+      setTheme('dark');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    if (nextTheme === 'light') {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+      localStorage.setItem('theme', 'light');
+    } else {
+      document.documentElement.classList.remove('light');
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    }
+  };
+
   const chips: Array<{ key: ItemStatus; label: string; color: string }> = [
     { key: 'pending', label: 'Pending', color: '#c98a2b' },
     { key: 'ready', label: 'Ready', color: '#2f6b4f' },
@@ -64,6 +91,27 @@ export default function TopBar({
             );
           })}
         </div>
+
+        <div className="h-6 w-px bg-ink-rule mx-1 hidden sm:block" />
+
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="font-mono text-xs px-2.5 py-1.5 rounded-[3px] border border-ink-rule bg-ink-night-2 hover:border-stone-500 text-cream flex items-center gap-1.5 transition cursor-pointer shadow-sm ml-auto sm:ml-0"
+          title={`Switch to ${mounted && theme === 'light' ? 'Dark' : 'Light'} mode`}
+        >
+          {mounted && theme === 'light' ? (
+            <>
+              <Moon className="w-3.5 h-3.5 text-indigo-500" />
+              <span className="text-[11.5px] font-medium">Dark mode</span>
+            </>
+          ) : (
+            <>
+              <Sun className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-[11.5px] font-medium">Light mode</span>
+            </>
+          )}
+        </button>
       </div>
     </div>
   );
