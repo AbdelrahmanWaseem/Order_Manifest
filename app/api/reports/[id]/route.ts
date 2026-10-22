@@ -34,3 +34,39 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ error: err.message || 'Failed to get report' }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const reportId = params.id;
+
+    // 1. Delete from PostgreSQL if available
+    try {
+      const existing = await db.report.findUnique({ where: { id: reportId } });
+      if (existing) {
+        await db.report.delete({ where: { id: reportId } });
+        if (existing.batchId) {
+          try {
+            await db.batch.delete({ where: { id: existing.batchId } });
+          } catch {}
+        }
+      }
+    } catch (dbErr) {
+      console.warn('DB delete error, continuing with local file cleanup:', dbErr);
+    }
+
+    // 2. Delete local file
+    const filePath = path.join(DATA_DIR, `${reportId}.json`);
+    if (fs.existsSync(filePath)) {
+      try {
+        fs.unlinkSync(filePath);
+      } catch (e) {
+        console.error('Error removing report file:', e);
+      }
+    }
+
+    return NextResponse.json({ success: true, deletedId: reportId });
+  } catch (err: any) {
+    console.error('Failed to delete report:', err);
+    return NextResponse.json({ error: err.message || 'Failed to delete report' }, { status: 500 });
+  }
+}

@@ -13,6 +13,7 @@ interface OrderGroupProps {
   onCycleStatus: (orderId: string, itemId: string) => void;
   onSetNote: (orderId: string, itemId: string, note: string) => void;
   onMarkAllReady: (orderId: string) => void;
+  onRemoveOrder: (orderId: string) => void;
 }
 
 export default function OrderGroup({
@@ -24,6 +25,7 @@ export default function OrderGroup({
   onCycleStatus,
   onSetNote,
   onMarkAllReady,
+  onRemoveOrder,
 }: OrderGroupProps) {
   if (filteredItems.length === 0) return null;
 
@@ -44,13 +46,25 @@ export default function OrderGroup({
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={() => onMarkAllReady(order.id)}
-          className="font-mono text-[10.5px] font-bold tracking-wider px-2.5 py-1 rounded-[3px] text-stamp-ready border border-stamp-ready hover:bg-stamp-ready hover:text-white transition cursor-pointer"
-        >
-          Mark all ready
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onRemoveOrder(order.id)}
+            className="font-mono text-[10.5px] font-medium tracking-wider px-2 py-1 rounded-[3px] text-stone-400 hover:text-stamp-missing border border-ink-rule hover:border-stamp-missing transition cursor-pointer flex items-center gap-1"
+            title="Remove this order from the board"
+          >
+            <span>✕</span>
+            <span>Remove</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onMarkAllReady(order.id)}
+            className="font-mono text-[10.5px] font-bold tracking-wider px-2.5 py-1 rounded-[3px] text-stamp-ready border border-stamp-ready hover:bg-stamp-ready hover:text-white transition cursor-pointer"
+          >
+            Mark all ready
+          </button>
+        </div>
       </div>
 
       {/* Tickets Grid */}

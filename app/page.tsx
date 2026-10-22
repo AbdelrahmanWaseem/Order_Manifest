@@ -353,6 +353,24 @@ export default function OrderManifestApp() {
     }, 100);
   };
 
+  const handleRemoveOrder = (orderId: string) => {
+    setOrders((prev) => prev.filter((o) => o.id !== orderId));
+  };
+
+  const handleDeleteReport = async (reportId: string) => {
+    try {
+      const res = await fetch(`/api/reports/${reportId}`, { method: 'DELETE' });
+      if (res.ok) {
+        if (currentReport?.id === reportId) {
+          setCurrentReport(null);
+        }
+        refreshArchiveCount();
+      }
+    } catch {
+      alert('Failed to delete report');
+    }
+  };
+
   // Filter orders by search query
   const query = searchQuery.trim().toLowerCase();
   const visibleOrders = orders.filter((o) => {
@@ -420,6 +438,7 @@ export default function OrderManifestApp() {
                   onCycleStatus={handleCycleStatus}
                   onSetNote={handleSetNote}
                   onMarkAllReady={handleMarkAllReady}
+                  onRemoveOrder={handleRemoveOrder}
                 />
               );
             })}
@@ -439,7 +458,11 @@ export default function OrderManifestApp() {
       {/* Generated Report View */}
       {currentReport && (
         <div ref={reportRef}>
-          <ReportView report={currentReport} onEditBatch={handleEditBatch} />
+          <ReportView
+            report={currentReport}
+            onEditBatch={handleEditBatch}
+            onDeleteReport={handleDeleteReport}
+          />
         </div>
       )}
 
@@ -447,6 +470,7 @@ export default function OrderManifestApp() {
       <ArchiveModal
         isOpen={isArchiveOpen}
         onClose={() => setIsArchiveOpen(false)}
+        onDeleteReport={handleDeleteReport}
         onSelectReport={(report) => {
           setCurrentReport(report);
           setTimeout(() => {

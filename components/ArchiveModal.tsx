@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Loader2, Calendar } from 'lucide-react';
+import { X, Loader2, Calendar, Trash2 } from 'lucide-react';
 import { ReportSnapshot } from '@/types/manifest';
 
 interface ArchiveModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectReport: (report: ReportSnapshot) => void;
+  onDeleteReport?: (id: string) => void;
 }
 
 interface ReportSummary {
@@ -21,6 +22,7 @@ export default function ArchiveModal({
   isOpen,
   onClose,
   onSelectReport,
+  onDeleteReport,
 }: ArchiveModalProps) {
   const [reports, setReports] = useState<ReportSummary[]>([]);
   const [loading, setLoading] = useState(false);
@@ -47,6 +49,20 @@ export default function ArchiveModal({
       setError(err.message || 'Error loading saved reports');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm('Are you sure you want to delete this saved report from archive?')) return;
+    try {
+      const res = await fetch(`/api/reports/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setReports((prev) => prev.filter((r) => r.id !== id));
+        if (onDeleteReport) onDeleteReport(id);
+      }
+    } catch (err) {
+      alert('Failed to delete report');
     }
   };
 
@@ -140,21 +156,29 @@ export default function ArchiveModal({
                         </div>
                         <div className="space-y-1.5">
                           {list.map((r) => (
-                            <button
+                            <div
                               key={r.id}
-                              type="button"
                               onClick={() => handleOpenReport(r.id)}
-                              disabled={loadingId === r.id}
-                              className="w-full bg-ink-night hover:bg-stone-900 border border-ink-rule hover:border-stone-500 rounded p-2.5 flex items-center justify-between text-xs text-left transition cursor-pointer disabled:opacity-50"
+                              className="w-full bg-ink-night hover:bg-stone-900 border border-ink-rule hover:border-stone-500 rounded p-2.5 flex items-center justify-between text-xs text-left transition cursor-pointer"
                             >
                               <span className="font-medium text-stone-200">
                                 {r.orderCount} order(s) &middot; {r.itemCount} item(s)
                               </span>
-                              <span className="font-mono text-[11px] text-stone-400 flex items-center gap-1.5">
-                                {loadingId === r.id && <Loader2 className="w-3 h-3 animate-spin text-stamp-pending" />}
-                                <span>{new Date(r.createdAt).toLocaleTimeString()}</span>
-                              </span>
-                            </button>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-[11px] text-stone-400 flex items-center gap-1.5">
+                                  {loadingId === r.id && <Loader2 className="w-3 h-3 animate-spin text-stamp-pending" />}
+                                  <span>{new Date(r.createdAt).toLocaleTimeString()}</span>
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleDelete(r.id, e)}
+                                  className="p-1 text-stone-500 hover:text-stamp-missing rounded transition"
+                                  title="Delete saved report"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
                           ))}
                         </div>
                       </div>

@@ -2,14 +2,15 @@
 
 import React, { useState } from 'react';
 import { ReportSnapshot } from '@/types/manifest';
-import { Check, Copy, Edit, Download, Printer } from 'lucide-react';
+import { Check, Copy, Edit, Download, Printer, Trash2 } from 'lucide-react';
 
 interface ReportViewProps {
   report: ReportSnapshot;
   onEditBatch: (report: ReportSnapshot) => void;
+  onDeleteReport: (reportId: string) => void;
 }
 
-export default function ReportView({ report, onEditBatch }: ReportViewProps) {
+export default function ReportView({ report, onEditBatch, onDeleteReport }: ReportViewProps) {
   const [copied, setCopied] = useState(false);
 
   // Helper to determine order overall status
@@ -252,6 +253,19 @@ export default function ReportView({ report, onEditBatch }: ReportViewProps) {
 
       {/* Action Buttons */}
       <div className="flex flex-wrap items-center justify-end gap-2.5 pt-4 border-t border-paper-rule no-print">
+        <button
+          type="button"
+          onClick={() => {
+            if (confirm('Are you sure you want to delete this report?')) {
+              onDeleteReport(report.id);
+            }
+          }}
+          className="bg-transparent hover:bg-rose-950/20 border border-stamp-missing text-stamp-missing font-semibold text-xs px-3.5 py-2 rounded transition cursor-pointer flex items-center gap-1.5 mr-auto"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+          <span>Delete report</span>
+        </button>
+
         <button
           type="button"
           onClick={handleCopyReadyOrders}
