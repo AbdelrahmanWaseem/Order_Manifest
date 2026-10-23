@@ -257,6 +257,8 @@ export async function getRecentOrders(options: {
   after?: string | null;
   before?: string | null;
   query?: string;
+  sinceDate?: string;
+  loadAll?: boolean;
 }): Promise<RecentOrdersResult> {
   const config = getShopifyConfig();
 
@@ -302,10 +304,15 @@ export async function getRecentOrders(options: {
     };
   }
 
-  const first = options.first || 15;
-  const variables: Record<string, any> = { first };
-  if (options.after) variables.after = options.after;
-  if (options.query) variables.query = options.query;
+  // Active season date filter: from August 1st of active cycle to present
+  const now = new Date();
+  const augYear = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
+  const since = options.sinceDate || `${augYear}-08-01`;
+
+  const dateClause = `created_at:>=${since}`;
+  const effectiveQuery = options.query && options.query.trim()
+    ? `(${dateClause}) ${options.query.trim()}`
+    : dateClause;
 
   const graphqlQuery = `
     query GetRecentOrders($first: Int!, $after: String, $query: String) {
@@ -340,6 +347,41 @@ export async function getRecentOrders(options: {
       }>;
     };
   }
+
+  // If loadAll is requested: automatically paginate until all orders from August are collected
+  if (options.loadAll) {
+    let allEdges: Array<{ cursor: string; node: any }> = [];
+    let currentCursor: string | null = options.after || null;
+    let hasNext = true;
+
+    while (hasNext) {
+      const vars: Record<string, any> = { first: 250, query: effectiveQuery };
+      if (currentCursor) vars.after = currentCursor;
+
+      const pageData: ResponseData = await shopifyGraphQL<ResponseData>(graphqlQuery, vars);
+      const edges = pageData.orders?.edges || [];
+      allEdges.push(...edges);
+
+      hasNext = pageData.orders?.pageInfo?.hasNextPage || false;
+      currentCursor = pageData.orders?.pageInfo?.endCursor || null;
+
+      // Safety limit
+      if (allEdges.length >= 2500) break;
+    }
+
+    return {
+      orders: allEdges.map(e => transformShopifyOrder(e.node)),
+      pageInfo: {
+        hasNextPage: false,
+        hasPreviousPage: false,
+        endCursor: null,
+      },
+    };
+  }
+
+  const first = options.first || 50;
+  const variables: Record<string, any> = { first, query: effectiveQuery };
+  if (options.after) variables.after = options.after;
 
   const data = await shopifyGraphQL<ResponseData>(graphqlQuery, variables);
   const orders = data.orders.edges.map(e => transformShopifyOrder(e.node));

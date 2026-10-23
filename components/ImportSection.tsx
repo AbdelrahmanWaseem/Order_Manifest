@@ -26,6 +26,7 @@ export default function ImportSection({
   const [defaultOrders, setDefaultOrders] = useState<ShopifyOrderSummary[]>([]);
   const [browseLoading, setBrowseLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [loadingAll, setLoadingAll] = useState(false);
   const [browseError, setBrowseError] = useState<string | null>(null);
   const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,10 +41,12 @@ export default function ImportSection({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load recent orders when browse tab is active
-  const loadRecentOrders = async (cursor: string | null = null, query: string = '') => {
+  // Load recent orders when browse tab is active (default from August 1st to present)
+  const loadRecentOrders = async (cursor: string | null = null, query: string = '', loadAll: boolean = false) => {
     const isSearch = Boolean(query.trim());
-    if (isSearch) {
+    if (loadAll) {
+      setLoadingAll(true);
+    } else if (isSearch) {
       setSearchLoading(true);
     } else {
       setBrowseLoading(true);
@@ -51,8 +54,12 @@ export default function ImportSection({
     setBrowseError(null);
     try {
       const params = new URLSearchParams();
-      params.set('first', '25');
-      if (cursor) params.set('after', cursor);
+      if (loadAll) {
+        params.set('all', 'true');
+      } else {
+        params.set('first', '50');
+        if (cursor) params.set('after', cursor);
+      }
       if (query.trim()) params.set('query', query.trim());
 
       const res = await fetch(`/api/shopify/orders?${params.toString()}`);
@@ -82,12 +89,13 @@ export default function ImportSection({
     } finally {
       setBrowseLoading(false);
       setSearchLoading(false);
+      setLoadingAll(false);
     }
   };
 
   useEffect(() => {
     if (activeTab === 'browse' && recentOrders.length === 0 && !browseLoading) {
-      loadRecentOrders();
+      loadRecentOrders(null, '', true);
     }
   }, [activeTab]);
 
@@ -281,11 +289,14 @@ export default function ImportSection({
     <div className="bg-ink-night-2 border border-ink-rule rounded-md p-5 mb-7">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-ink-rule pb-3 mb-4 gap-2">
         <div>
-          <h2 className="text-sm font-bold uppercase tracking-wider text-cream">
-            Import Orders
+          <h2 className="text-sm font-bold uppercase tracking-wider text-cream flex items-center gap-2">
+            <span>Import Orders</span>
+            <span className="text-[10.5px] font-mono px-2 py-0.5 rounded bg-stamp-pending/15 text-stamp-pending font-normal border border-stamp-pending/30">
+              Aug 1 – Present
+            </span>
           </h2>
           <p className="text-xs text-stone-400 mt-0.5">
-            Retrieve real orders and inventory live from Essentials EG Shopify Admin
+            Orders from August till now live from Essentials EG Shopify Admin
           </p>
         </div>
 
@@ -362,11 +373,17 @@ export default function ImportSection({
           )}
 
           {/* Orders list */}
-          <div className="border border-ink-rule rounded bg-ink-night overflow-hidden max-h-80 overflow-y-auto">
-            {(browseLoading || searchLoading) && recentOrders.length === 0 ? (
+          <div className="border border-ink-rule rounded bg-ink-night overflow-hidden max-h-[420px] overflow-y-auto">
+            {(browseLoading || searchLoading || loadingAll) && recentOrders.length === 0 ? (
               <div className="p-8 text-center text-xs text-stone-400 flex items-center justify-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin text-stamp-pending" />
-                <span>{searchLoading ? 'Searching Shopify for matching orders…' : 'Loading recent orders from Shopify…'}</span>
+                <span>
+                  {loadingAll
+                    ? 'Loading all orders from August till now…'
+                    : searchLoading
+                    ? 'Searching Shopify for matching orders…'
+                    : 'Loading orders from August till now…'}
+                </span>
               </div>
             ) : recentOrders.length === 0 ? (
               <div className="p-8 text-center text-xs text-stone-500">
@@ -450,24 +467,14 @@ export default function ImportSection({
           </div>
 
           {/* Action bar for browse */}
-          <div className="flex items-center justify-between pt-1">
-            <div className="text-xs text-stone-400">
-              {selectedOrderIds.size} order(s) selected
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-1 gap-2">
+            <div className="text-xs text-stone-400 flex items-center gap-2">
+              <span>{selectedOrderIds.size} selected</span>
+              <span className="text-stone-600">&middot;</span>
+              <span>{recentOrders.length} orders loaded (Aug &rarr; Present)</span>
             </div>
 
             <div className="flex items-center gap-2">
-              {pageInfo.hasNextPage && (
-                <button
-                  type="button"
-                  onClick={() => loadRecentOrders(pageInfo.endCursor, searchQuery)}
-                  disabled={browseLoading}
-                  className="px-2.5 py-1.5 bg-ink-night border border-ink-rule hover:border-stone-500 rounded text-xs text-stone-300 flex items-center gap-1 cursor-pointer disabled:opacity-50"
-                >
-                  <span>Next Page</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              )}
-
               <button
                 type="button"
                 onClick={handleImportSelected}
