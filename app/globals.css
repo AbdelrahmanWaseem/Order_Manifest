@@ -3,35 +3,37 @@
 @tailwind utilities;
 
 :root, html.dark {
-  --ink-night: #14151a;
-  --ink-night-2: #1b1c22;
-  --ink-rule: #33343d;
-  --paper: #ece3cd;
-  --paper-2: #e2d7ba;
-  --paper-rule: #c8bb95;
-  --ink-dark: #2a2317;
-  --ink-soft: #6b6250;
-  --stamp-ready: #2f6b4f;
-  --stamp-incoming: #3a5f8a;
-  --stamp-missing: #a4392f;
-  --stamp-pending: #c98a2b;
-  --cream: #f3ede0;
+  --ink-night: #0b0c0f;
+  --ink-night-2: #13151b;
+  --ink-night-3: #1a1d26;
+  --ink-rule: #252836;
+  --paper: #13151b;
+  --paper-2: #1a1d26;
+  --paper-rule: #252836;
+  --ink-dark: #f8fafc;
+  --ink-soft: #94a3b8;
+  --stamp-ready: #10b981;
+  --stamp-incoming: #3b82f6;
+  --stamp-missing: #f43f5e;
+  --stamp-pending: #f59e0b;
+  --cream: #f8fafc;
 }
 
 html.light {
-  --ink-night: #f4f5f8;
+  --ink-night: #f8fafc;
   --ink-night-2: #ffffff;
-  --ink-rule: #e2e4ea;
+  --ink-night-3: #f1f5f9;
+  --ink-rule: #e2e8f0;
   --paper: #ffffff;
-  --paper-2: #f4f1e8;
-  --paper-rule: #e6dfcf;
-  --ink-dark: #191a20;
-  --ink-soft: #636159;
-  --stamp-ready: #1f6e4a;
-  --stamp-incoming: #2d5584;
-  --stamp-missing: #b9382d;
-  --stamp-pending: #b87b1e;
-  --cream: #14151b;
+  --paper-2: #f8fafc;
+  --paper-rule: #e2e8f0;
+  --ink-dark: #0f172a;
+  --ink-soft: #64748b;
+  --stamp-ready: #059669;
+  --stamp-incoming: #2563eb;
+  --stamp-missing: #e11d48;
+  --stamp-pending: #d97706;
+  --cream: #0f172a;
 }
 
 body {
@@ -41,104 +43,109 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  transition: background-color 0.15s ease, color 0.15s ease;
-  letter-spacing: -0.01em;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  letter-spacing: -0.012em;
 }
 
-/* High contrast dark mode typography for maximum readability */
-html.dark .text-stone-300 {
-  color: #e2dfd7 !important;
-}
-html.dark .text-stone-400 {
-  color: #c5c1b6 !important;
-}
-html.dark .text-stone-500 {
-  color: #9e9a8f !important;
-}
-html.dark .text-stone-600 {
-  color: #7d796f !important;
-}
-
-/* Light mode overrides for text contrast and borders */
+/* Light mode overrides for clean contrast and borders */
 html.light .text-stone-300 {
-  color: #3f3f46 !important;
+  color: #334155 !important;
 }
 html.light .text-stone-400 {
-  color: #52525b !important;
+  color: #64748b !important;
 }
 html.light .text-stone-500 {
-  color: #71717a !important;
+  color: #64748b !important;
 }
 html.light .bg-stone-800 {
-  background-color: #e4e4e7 !important;
-  color: #27272a !important;
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
 }
 html.light .bg-stone-900 {
-  background-color: #f4f4f5 !important;
+  background-color: #f8fafc !important;
 }
 html.light .bg-stone-900\/60 {
-  background-color: #f4f4f5 !important;
+  background-color: #f8fafc !important;
 }
 html.light .hover\:bg-stone-900\/60:hover {
-  background-color: #ececee !important;
+  background-color: #f1f5f9 !important;
 }
 html.light .hover\:bg-stone-800:hover {
-  background-color: #e4e4e7 !important;
+  background-color: #e2e8f0 !important;
 }
 html.light input,
 html.light textarea {
-  color: #18181b !important;
+  color: #0f172a !important;
+  background-color: #ffffff !important;
 }
 html.light input::placeholder,
 html.light textarea::placeholder {
-  color: #9ca3af !important;
-}
-html.light .ticket {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-html.light .ticket:hover {
-  box-shadow: 0 4px 14px rgba(0,0,0,0.12);
-}
-html.light .report-doc {
-  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-  border: 1px solid #e2e4ea;
+  color: #94a3b8 !important;
 }
 
-.font-mono {
-  font-family: var(--font-mono), 'IBM Plex Mono', monospace;
-}
-
-/* Paper Ticket Styling */
+/* Modern Card Styling */
 .ticket {
   position: relative;
   background: var(--paper);
   color: var(--ink-dark);
-  border-radius: 3px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.35);
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0 27px,
-    var(--paper-rule) 27px 28px
-  );
+  border: 1px solid var(--ink-rule);
+  border-radius: 14px;
+  box-shadow: 0 4px 18px -2px rgba(0, 0, 0, 0.2);
   overflow: hidden;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
 }
 
 .ticket:hover {
-  box-shadow: 0 5px 14px rgba(0,0,0,0.45);
+  transform: translateY(-2px);
+  border-color: rgba(139, 92, 246, 0.4);
+  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.3);
 }
 
-.ticket::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 8px;
-  background-image: radial-gradient(circle, var(--ink-night) 2.6px, transparent 2.7px);
-  background-size: 8px 12px;
-  background-position: -4px 0;
-  z-index: 5;
+html.light .ticket {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+}
+
+html.light .ticket:hover {
+  border-color: #c084fc;
+  box-shadow: 0 10px 24px -2px rgba(15, 23, 42, 0.1);
+}
+
+/* Stamped active state on tickets */
+.ticket-stamped {
+  border-color: var(--ink-rule);
+}
+
+.font-mono {
+  font-family: var(--font-mono), 'JetBrains Mono', 'IBM Plex Mono', monospace;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: var(--ink-night);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--ink-rule);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background: #fff !important;
+    color: #0f172a !important;
+  }
+  .no-print {
+    display: none !important;
+  }
 }
 
 /* Custom Scrollbars */

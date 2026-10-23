@@ -109,28 +109,33 @@ export default function ArchiveModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-ink-night-2 border border-ink-rule rounded-lg w-full max-w-lg max-h-[82vh] flex flex-col shadow-2xl overflow-hidden"
+        className="bg-ink-night-2/95 border border-ink-rule rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col shadow-2xl overflow-hidden backdrop-blur-md"
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-4 border-b border-ink-rule">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-stamp-pending" />
-            <h3 className="font-bold text-sm text-cream">Saved reports archive</h3>
+        <div className="flex items-center justify-between p-5 border-b border-ink-rule/80 bg-ink-night/50">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+              <Calendar className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="font-extrabold text-sm sm:text-base text-cream tracking-tight">Saved Reports Archive</h3>
+              <p className="text-[11px] text-stone-400 font-medium">Browse, restore, or export previous manifest batches</p>
+            </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-stone-400 hover:text-white p-1 rounded transition cursor-pointer"
+            className="text-stone-400 hover:text-white p-1.5 rounded-lg hover:bg-ink-night transition cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="p-4 overflow-y-auto flex-1">
+        <div className="p-5 overflow-y-auto flex-1">
           {loading ? (
             <div className="p-10 text-center text-xs text-stone-400 flex items-center justify-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin text-stamp-pending" />
+              <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
               <span>Loading saved reports…</span>
             </div>
           ) : error ? (
@@ -138,44 +143,44 @@ export default function ArchiveModal({
               {error}
             </div>
           ) : reports.length === 0 ? (
-            <div className="p-10 text-center text-xs text-stone-500">
+            <div className="p-10 text-center text-xs text-stone-400 font-medium">
               No saved reports yet — generate one and it will show up here.
             </div>
           ) : (
-            <div className="space-y-5">
+            <div className="space-y-6">
               {Object.entries(groupedReports).map(([month, days]) => (
                 <div key={month}>
-                  <div className="font-mono text-[11px] uppercase tracking-wider text-stamp-pending mb-2">
+                  <div className="font-mono text-xs font-black uppercase tracking-wider text-amber-400 mb-2.5">
                     {month}
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-3.5">
                     {Object.entries(days).map(([day, list]) => (
                       <div key={day}>
-                        <div className="text-xs text-stone-300 font-semibold mb-1.5 pl-0.5">
+                        <div className="text-xs text-stone-300 font-bold mb-2 pl-0.5">
                           {day}
                         </div>
-                        <div className="space-y-1.5">
+                        <div className="space-y-2">
                           {list.map((r) => (
                             <div
                               key={r.id}
                               onClick={() => handleOpenReport(r.id)}
-                              className="w-full bg-ink-night hover:bg-stone-900 border border-ink-rule hover:border-stone-500 rounded p-2.5 flex items-center justify-between text-xs text-left transition cursor-pointer"
+                              className="w-full bg-ink-night hover:bg-ink-night-3 border border-ink-rule hover:border-purple-500/50 rounded-xl p-3 flex items-center justify-between text-xs text-left transition-all duration-150 cursor-pointer shadow-sm group active:scale-[0.99]"
                             >
-                              <span className="font-medium text-stone-200">
-                                {r.orderCount} order(s) &middot; {r.itemCount} item(s)
+                              <span className="font-bold text-cream group-hover:text-purple-300 transition-colors">
+                                {r.orderCount} order{r.orderCount > 1 ? 's' : ''} &middot; {r.itemCount} item{r.itemCount > 1 ? 's' : ''}
                               </span>
-                              <div className="flex items-center gap-2">
-                                <span className="font-mono text-[11px] text-stone-400 flex items-center gap-1.5">
-                                  {loadingId === r.id && <Loader2 className="w-3 h-3 animate-spin text-stamp-pending" />}
+                              <div className="flex items-center gap-2.5">
+                                <span className="font-mono text-xs text-stone-400 flex items-center gap-1.5 font-semibold">
+                                  {loadingId === r.id && <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />}
                                   <span>{new Date(r.createdAt).toLocaleTimeString()}</span>
                                 </span>
                                 <button
                                   type="button"
                                   onClick={(e) => handleDelete(r.id, e)}
-                                  className="p-1 text-stone-500 hover:text-stamp-missing rounded transition"
+                                  className="p-1.5 text-stone-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
                                   title="Delete saved report"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <Trash2 className="w-4 h-4" />
                                 </button>
                               </div>
                             </div>

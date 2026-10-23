@@ -78,18 +78,18 @@ export default function ReportView({ report, onEditBatch, onDeleteReport }: Repo
   };
 
   return (
-    <div className="report-doc mt-8 bg-cream text-ink-dark rounded-lg p-6 sm:p-8 shadow-2xl">
+    <div className="report-doc mt-8 bg-cream text-ink-dark rounded-2xl p-6 sm:p-8 shadow-2xl border border-ink-rule/80">
       {/* Report Head */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end border-b-2 border-ink-dark pb-4 mb-6 gap-3">
         <div>
-          <div className="font-mono text-[11px] tracking-widest uppercase text-ink-soft mb-1">
+          <div className="font-mono text-xs font-black tracking-widest uppercase text-ink-soft mb-1">
             Essentials EG — Ops
           </div>
-          <h2 className="text-2xl font-bold tracking-tight text-ink-dark">Shipment Report</h2>
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-ink-dark">Shipment Report</h2>
         </div>
         <div className="font-mono text-xs text-ink-soft sm:text-right">
-          <div>{new Date(report.createdAt).toLocaleString()}</div>
-          <div className="font-semibold text-ink-dark mt-0.5">
+          <div className="font-medium">{new Date(report.createdAt).toLocaleString()}</div>
+          <div className="font-bold text-ink-dark mt-0.5 text-sm">
             {report.orderCount} order(s) &middot; {report.itemCount} item(s)
           </div>
         </div>
@@ -271,7 +271,7 @@ export default function ReportView({ report, onEditBatch, onDeleteReport }: Repo
               onDeleteReport(report.id);
             }
           }}
-          className="bg-transparent hover:bg-rose-950/20 border border-stamp-missing text-stamp-missing font-semibold text-xs px-3.5 py-2 rounded transition cursor-pointer flex items-center gap-1.5 mr-auto"
+          className="bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/40 text-rose-700 dark:text-rose-400 font-bold text-xs px-4 py-2.5 rounded-xl transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 mr-auto shadow-sm"
         >
           <Trash2 className="w-3.5 h-3.5" />
           <span>Delete report</span>
@@ -280,16 +280,16 @@ export default function ReportView({ report, onEditBatch, onDeleteReport }: Repo
         <button
           type="button"
           onClick={handleCopyReadyOrders}
-          className="bg-transparent hover:bg-paper-2 border border-ink-dark text-ink-dark font-semibold text-xs px-3.5 py-2 rounded transition cursor-pointer flex items-center gap-1.5"
+          className="bg-paper-2 hover:bg-paper-rule/60 border border-ink-dark/40 text-ink-dark font-bold text-xs px-4 py-2.5 rounded-xl transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 shadow-sm"
         >
-          {copied ? <Check className="w-3.5 h-3.5 text-stamp-ready" /> : <Copy className="w-3.5 h-3.5" />}
+          {copied ? <Check className="w-3.5 h-3.5 text-stamp-ready stroke-[2.5]" /> : <Copy className="w-3.5 h-3.5" />}
           <span>{copied ? 'Copied to clipboard!' : 'Copy ready order #s'}</span>
         </button>
 
         <button
           type="button"
           onClick={() => onEditBatch(report)}
-          className="bg-transparent hover:bg-paper-2 border border-ink-dark text-ink-dark font-semibold text-xs px-3.5 py-2 rounded transition cursor-pointer flex items-center gap-1.5"
+          className="bg-paper-2 hover:bg-paper-rule/60 border border-ink-dark/40 text-ink-dark font-bold text-xs px-4 py-2.5 rounded-xl transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 shadow-sm"
         >
           <Edit className="w-3.5 h-3.5" />
           <span>Edit this batch</span>
@@ -298,7 +298,7 @@ export default function ReportView({ report, onEditBatch, onDeleteReport }: Repo
         <button
           type="button"
           onClick={handleExportCSV}
-          className="bg-transparent hover:bg-paper-2 border border-ink-dark text-ink-dark font-semibold text-xs px-3.5 py-2 rounded transition cursor-pointer flex items-center gap-1.5"
+          className="bg-paper-2 hover:bg-paper-rule/60 border border-ink-dark/40 text-ink-dark font-bold text-xs px-4 py-2.5 rounded-xl transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 shadow-sm"
         >
           <Download className="w-3.5 h-3.5" />
           <span>Export CSV</span>
@@ -307,7 +307,7 @@ export default function ReportView({ report, onEditBatch, onDeleteReport }: Repo
         <button
           type="button"
           onClick={() => window.print()}
-          className="bg-ink-dark hover:bg-black text-cream font-semibold text-xs px-4 py-2 rounded transition cursor-pointer flex items-center gap-1.5"
+          className="bg-ink-dark hover:bg-black text-cream font-extrabold text-xs px-5 py-2.5 rounded-xl transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 shadow-md"
         >
           <Printer className="w-3.5 h-3.5" />
           <span>Print / save as PDF</span>

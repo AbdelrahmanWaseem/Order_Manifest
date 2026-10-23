@@ -288,51 +288,51 @@ export default function ImportSection({
   };
 
   return (
-    <div className="bg-ink-night-2 border border-ink-rule rounded-md p-5 mb-7">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-ink-rule pb-3 mb-4 gap-2">
+    <div className="bg-ink-night-2/70 border border-ink-rule rounded-2xl p-5 sm:p-6 mb-8 shadow-sm backdrop-blur-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-ink-rule/80 pb-4 mb-4 gap-3">
         <div>
-          <h2 className="text-sm font-bold uppercase tracking-wider text-cream flex items-center gap-2">
+          <h2 className="text-sm font-extrabold uppercase tracking-wider text-cream flex items-center gap-2.5">
             <span>Import Orders</span>
-            <span className="text-[10.5px] font-mono px-2 py-0.5 rounded bg-stamp-pending/15 text-stamp-pending font-normal border border-stamp-pending/30">
+            <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-lg bg-amber-500/15 text-amber-400 border border-amber-500/30">
               Aug 1 – Present
             </span>
           </h2>
-          <p className="text-xs text-stone-400 mt-0.5">
-            Orders from August till now live from Essentials EG Shopify Admin
+          <p className="text-xs text-stone-400 font-medium mt-1">
+            Browse live orders from Essentials EG Shopify Admin or paste specific order numbers
           </p>
         </div>
 
         {/* Tab switchers & Manual Order button */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2.5 flex-wrap">
           {onOpenManualOrder && (
             <button
               type="button"
               onClick={onOpenManualOrder}
-              className="font-mono text-xs font-bold px-3 py-1.5 rounded bg-purple-600 hover:bg-purple-500 text-white shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+              className="font-mono text-xs font-bold px-4 py-2 rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-md hover:shadow-indigo-500/25 transition-all duration-150 active:scale-95 flex items-center gap-1.5 cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-4 h-4 stroke-[2.5]" />
               <span>Create Manual Order</span>
             </button>
           )}
 
-          <div className="flex rounded bg-ink-night p-1 border border-ink-rule self-start">
+          <div className="flex rounded-xl bg-ink-night p-1 border border-ink-rule self-start shadow-inner">
             <button
               type="button"
               onClick={() => setActiveTab('browse')}
-              className={`text-xs px-3 py-1 font-medium rounded transition ${
+              className={`text-xs px-3.5 py-1.5 font-bold rounded-lg transition-all ${
                 activeTab === 'browse'
-                  ? 'bg-ink-rule text-cream font-semibold'
+                  ? 'bg-ink-night-2 text-cream font-extrabold shadow-sm border border-ink-rule'
                   : 'text-stone-400 hover:text-cream'
               }`}
             >
-              Browse Shopify Store
+              Browse Store
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('paste')}
-              className={`text-xs px-3 py-1 font-medium rounded transition ${
+              className={`text-xs px-3.5 py-1.5 font-bold rounded-lg transition-all ${
                 activeTab === 'paste'
-                  ? 'bg-ink-rule text-cream font-semibold'
+                  ? 'bg-ink-night-2 text-cream font-extrabold shadow-sm border border-ink-rule'
                   : 'text-stone-400 hover:text-cream'
               }`}
             >
@@ -510,10 +510,10 @@ export default function ImportSection({
                 type="button"
                 onClick={handleImportSelected}
                 disabled={selectedOrderIds.size === 0}
-                className="bg-stamp-pending hover:bg-[#b57a24] text-ink-dark font-semibold text-xs px-3.5 py-1.5 rounded transition flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                className="font-mono text-xs font-black tracking-wide px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-ink-dark shadow-md hover:shadow-lg transition-all duration-150 flex items-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
               >
-                <span>Import Selected</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <span>Import {selectedOrderIds.size > 0 ? `(${selectedOrderIds.size})` : ''} Selected</span>
+                <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
               </button>
             </div>
           </div>
@@ -522,40 +522,43 @@ export default function ImportSection({
 
       {/* Tab 2: Paste manual textarea */}
       {activeTab === 'paste' && (
-        <div>
+        <div className="space-y-3">
           <textarea
             ref={textareaRef}
             id="rawInput"
             value={rawInput}
             onChange={(e) => setRawInput(e.target.value)}
             onPaste={handlePaste}
-            placeholder="1001, 1002, 1005&#10;1006"
-            className="w-full min-h-[90px] bg-ink-night border border-ink-rule rounded p-2.5 text-xs font-mono text-cream resize-y focus:outline-none focus:border-stamp-pending"
+            placeholder="Paste order numbers here, separated by comma, space, or newline&#10;e.g. 1001, 1002, 1005"
+            className="w-full min-h-[95px] bg-ink-night border border-ink-rule rounded-xl p-3.5 text-xs sm:text-sm font-mono font-medium text-cream resize-y focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all shadow-inner"
           />
 
-          <div className="flex flex-wrap items-center gap-2.5 mt-2.5">
+          <div className="flex flex-wrap items-center gap-2.5">
             <button
               type="button"
               onClick={() => performLookup()}
               disabled={fetching || !rawInput.trim()}
-              className="bg-stamp-pending hover:bg-[#b57a24] text-ink-dark font-semibold text-xs px-3.5 py-2 rounded transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="font-mono text-xs font-black tracking-wide px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-ink-dark shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {fetching ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Looking up…</span>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Looking up orders…</span>
                 </>
               ) : (
-                'Fetch from Shopify'
+                <>
+                  <span>Fetch from Shopify</span>
+                  <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
+                </>
               )}
             </button>
 
             <button
               type="button"
               onClick={loadSample}
-              className="bg-transparent hover:bg-stone-900 border border-ink-rule text-stone-300 text-xs px-3 py-2 rounded transition cursor-pointer"
+              className="font-mono text-xs font-semibold px-3.5 py-2.5 rounded-xl bg-ink-night hover:bg-stone-800 border border-ink-rule text-stone-300 hover:text-white transition cursor-pointer active:scale-95"
             >
-              Load sample order numbers
+              Load sample numbers
             </button>
 
             <span className="text-[11px] text-stone-500 font-mono">

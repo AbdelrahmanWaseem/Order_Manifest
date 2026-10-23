@@ -453,11 +453,13 @@ export default function OrderManifestApp() {
         onOpenManualOrder={() => setIsManualOrderOpen(true)}
       />
 
-      {/* Info Banner */}
-      <div className="text-xs text-stone-300 bg-ink-night-2 border border-dashed border-ink-rule rounded-md p-3 mb-6 leading-relaxed flex items-center justify-between flex-wrap gap-2">
-        <div>
-          <b className="text-cream">Production Ops Manifest:</b> Connected directly to Essentials EG Shopify Admin API & internal PostgreSQL database.
-          Create manual orders or import Shopify batches to match inventory in real-time.
+      {/* Modern Info Banner */}
+      <div className="text-xs text-stone-300 bg-gradient-to-r from-violet-950/20 via-ink-night-2 to-ink-night-2 border border-purple-500/20 rounded-2xl p-4 mb-7 leading-relaxed flex items-center justify-between flex-wrap gap-3 shadow-sm backdrop-blur-sm">
+        <div className="flex items-center gap-2.5">
+          <span className="w-2 h-2 rounded-full bg-violet-400 shadow-[0_0_8px_rgba(168,85,247,0.7)] shrink-0"></span>
+          <div>
+            <b className="text-cream font-extrabold">Production Ops Platform:</b> Connected live to Essentials EG Shopify Admin API & internal PostgreSQL database. Create manual orders, search items, and match inventory in real-time.
+          </div>
         </div>
       </div>
 
