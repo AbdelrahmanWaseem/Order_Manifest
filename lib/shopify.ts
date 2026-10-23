@@ -62,12 +62,53 @@ function getBrandColor(brand: string): string {
   return palette[index];
 }
 
+let cachedAccessToken: string | null = null;
+let tokenExpiresAt = 0;
+
+async function refreshShopifyToken(domain: string): Promise<string | null> {
+  const clientId = process.env.SHOPIFY_CLIENT_ID;
+  const clientSecret = process.env.SHOPIFY_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) return null;
+
+  try {
+    const res = await fetch(`https://${domain}/admin/oauth/access_token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client_id: clientId,
+        client_secret: clientSecret,
+        grant_type: 'client_credentials',
+      }),
+    });
+
+    const data = await res.json();
+    if (data.access_token) {
+      cachedAccessToken = data.access_token;
+      tokenExpiresAt = Date.now() + ((data.expires_in || 86400) - 120) * 1000;
+      return cachedAccessToken;
+    }
+  } catch (e) {
+    console.error('Failed to exchange client credentials for token:', e);
+  }
+  return null;
+}
+
+async function getValidToken(domain: string): Promise<string> {
+  if (cachedAccessToken && Date.now() < tokenExpiresAt) {
+    return cachedAccessToken;
+  }
+  const fresh = await refreshShopifyToken(domain);
+  if (fresh) return fresh;
+  return process.env.SHOPIFY_ADMIN_TOKEN || '';
+}
+
 function getShopifyConfig() {
   const domain = process.env.SHOPIFY_STORE_DOMAIN || process.env.SHOPIFY_SHOP || '221224-9e.myshopify.com';
-  const token = process.env.SHOPIFY_ADMIN_TOKEN;
+  const token = cachedAccessToken || process.env.SHOPIFY_ADMIN_TOKEN;
   const apiVersion = process.env.SHOPIFY_API_VERSION || '2024-07';
 
-  const isConfigured = !!token && !token.includes('xxxx');
+  const isConfigured = true;
   const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/\/$/, '');
   return { domain: cleanDomain, token, apiVersion, isConfigured };
 }
@@ -119,8 +160,9 @@ const SAMPLE_STORE_ORDERS: Record<string, { customer: string; items: Array<{ nam
   },
 };
 
-async function shopifyGraphQL<T>(query: string, variables: Record<string, any> = {}): Promise<T> {
-  const { domain, token, apiVersion } = getShopifyConfig();
+async function shopifyGraphQL<T>(query: string, variables: Record<string, any> = {}, retryCount = 0): Promise<T> {
+  const { domain, apiVersion } = getShopifyConfig();
+  const token = await getValidToken(domain);
   const endpoint = `https://${domain}/admin/api/${apiVersion}/graphql.json`;
 
   const res = await fetch(endpoint, {
@@ -133,6 +175,15 @@ async function shopifyGraphQL<T>(query: string, variables: Record<string, any> =
     cache: 'no-store',
   });
 
+  const json = await res.json().catch(() => null);
+
+  const isAuthError = res.status === 401 || (json?.errors && JSON.stringify(json.errors).includes('Invalid API key'));
+  if (isAuthError && retryCount === 0) {
+    cachedAccessToken = null;
+    await refreshShopifyToken(domain);
+    return shopifyGraphQL<T>(query, variables, retryCount + 1);
+  }
+
   if (!res.ok) {
     if (res.status === 401 || res.status === 403) {
       throw new Error('Shopify authentication failed. Please verify your SHOPIFY_ADMIN_TOKEN permissions.');
@@ -140,12 +191,11 @@ async function shopifyGraphQL<T>(query: string, variables: Record<string, any> =
     if (res.status === 429) {
       throw new Error('Shopify API rate limit exceeded. Please try again in a few moments.');
     }
-    const errorText = await res.text();
+    const errorText = JSON.stringify(json);
     throw new Error(`Shopify API error (${res.status}): ${errorText}`);
   }
 
-  const json = await res.json();
-  if (json.errors && json.errors.length > 0) {
+  if (json?.errors && json.errors.length > 0) {
     const msg = json.errors.map((e: any) => e.message).join('; ');
     throw new Error(`Shopify GraphQL error: ${msg}`);
   }
