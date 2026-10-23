@@ -36,6 +36,23 @@ export default function OrderGroup({
         <div className="flex items-baseline gap-2.5 flex-wrap">
           <h3 className="text-base font-bold text-cream">{order.customer}</h3>
           <span className="font-mono text-xs text-stamp-pending">{order.id}</span>
+          {order.fulfillmentStatus && (
+            <span
+              className={`font-mono text-[10px] font-semibold px-2 py-0.5 rounded-[3px] border ${
+                order.fulfillmentStatus.toUpperCase() === 'FULFILLED'
+                  ? 'bg-emerald-950/60 text-emerald-400 border-emerald-800/60'
+                  : order.fulfillmentStatus.toUpperCase().includes('PARTIAL')
+                  ? 'bg-blue-950/60 text-blue-400 border-blue-800/60'
+                  : 'bg-amber-950/60 text-amber-400 border-amber-800/60'
+              }`}
+            >
+              {order.fulfillmentStatus.toUpperCase() === 'FULFILLED'
+                ? 'Fulfilled'
+                : order.fulfillmentStatus.toUpperCase().includes('PARTIAL')
+                ? 'Partially Fulfilled'
+                : 'Unfulfilled'}
+            </span>
+          )}
           <span className="font-mono text-[11.5px] text-stone-500">
             {totalItemCount} item{totalItemCount > 1 ? 's' : ''}
           </span>

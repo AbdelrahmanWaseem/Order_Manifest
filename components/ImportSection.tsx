@@ -407,6 +407,7 @@ export default function ImportSection({
                       </button>
                     </th>
                     <th className="p-2.5">Order</th>
+                    <th className="p-2.5">Fulfillment</th>
                     <th className="p-2.5">Customer</th>
                     <th className="p-2.5">Items</th>
                     <th className="p-2.5">Total</th>
@@ -444,6 +445,21 @@ export default function ImportSection({
                           {isAlreadyImported && (
                             <span className="ml-1.5 text-[9px] font-mono px-1.5 py-0.2 rounded bg-stone-800 text-stone-400">
                               Imported
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-2.5 font-mono">
+                          {ord.fulfillmentStatus?.toUpperCase() === 'FULFILLED' ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-800/60">
+                              Fulfilled
+                            </span>
+                          ) : ord.fulfillmentStatus?.toUpperCase()?.includes('PARTIAL') ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-950/60 text-blue-400 border border-blue-800/60">
+                              Partial
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-950/60 text-amber-400 border border-amber-800/60">
+                              Unfulfilled
                             </span>
                           )}
                         </td>

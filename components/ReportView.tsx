@@ -40,11 +40,12 @@ export default function ReportView({ report, onEditBatch, onDeleteReport }: Repo
       return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
     };
 
-    const rows = [['Order', 'Customer', 'Item', 'Brand', 'Size', 'SKU', 'Quantity', 'Status', 'Note']];
+    const rows = [['Order', 'Fulfillment', 'Customer', 'Item', 'Brand', 'Size', 'SKU', 'Quantity', 'Status', 'Note']];
     report.orders.forEach((o) => {
       o.items.forEach((i) => {
         rows.push([
           o.id,
+          o.fulfillmentStatus || 'UNFULFILLED',
           o.customer,
           i.name,
           i.brand,
@@ -179,9 +180,14 @@ export default function ReportView({ report, onEditBatch, onDeleteReport }: Repo
                 className="order-card border border-paper-rule border-l-[5px] border-l-stamp-ready rounded bg-paper"
               >
                 <summary className="cursor-pointer p-3 flex items-center justify-between gap-2 select-none">
-                  <div className="flex items-center gap-2 font-mono text-xs">
+                  <div className="flex items-center gap-2 font-mono text-xs flex-wrap">
                     <span className="font-bold text-sm text-ink-dark">{order.id}</span>
                     <span className="text-ink-soft">&middot; {order.customer}</span>
+                    {order.fulfillmentStatus && (
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-paper-2 text-ink-soft border border-paper-rule font-medium">
+                        {order.fulfillmentStatus.toUpperCase() === 'FULFILLED' ? 'Fulfilled' : order.fulfillmentStatus.toUpperCase().includes('PARTIAL') ? 'Partial' : 'Unfulfilled'}
+                      </span>
+                    )}
                   </div>
                   <span className="font-mono text-[10.5px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full text-white bg-stamp-ready">
                     {state.label}
@@ -198,9 +204,14 @@ export default function ReportView({ report, onEditBatch, onDeleteReport }: Repo
               className={`order-card border border-paper-rule border-l-[5px] ${state.border} rounded p-3 bg-paper`}
             >
               <div className="flex items-center justify-between gap-2 border-b border-paper-rule/60 pb-2">
-                <div className="flex items-center gap-2 font-mono text-xs">
+                <div className="flex items-center gap-2 font-mono text-xs flex-wrap">
                   <span className="font-bold text-sm text-ink-dark">{order.id}</span>
                   <span className="text-ink-soft">&middot; {order.customer}</span>
+                  {order.fulfillmentStatus && (
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-paper-2 text-ink-soft border border-paper-rule font-medium">
+                      {order.fulfillmentStatus.toUpperCase() === 'FULFILLED' ? 'Fulfilled' : order.fulfillmentStatus.toUpperCase().includes('PARTIAL') ? 'Partial' : 'Unfulfilled'}
+                    </span>
+                  )}
                 </div>
                 <span
                   className={`font-mono text-[10.5px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full text-white ${state.badge}`}

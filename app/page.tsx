@@ -162,6 +162,7 @@ export default function OrderManifestApp() {
       shopifyOrderId: o.id,
       customer: o.customer,
       customerEmail: o.customerEmail,
+      fulfillmentStatus: o.fulfillmentStatus,
       items: o.items.map((it) => ({
         id: Math.random().toString(36).substring(2, 9),
         shopifyLineItemId: it.id,

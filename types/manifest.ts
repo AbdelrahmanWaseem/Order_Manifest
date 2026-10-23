@@ -22,6 +22,7 @@ export interface ManifestOrder {
   shopifyOrderId?: string;
   customer: string;
   customerEmail?: string;
+  fulfillmentStatus?: string; // e.g. "FULFILLED", "UNFULFILLED", "PARTIALLY_FULFILLED"
   items: ManifestItem[];
 }
 
