@@ -24,8 +24,8 @@ module.exports = {
         'cream': 'var(--cream)',
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        mono: ['var(--font-mono)', 'IBM Plex Mono', 'monospace'],
+        sans: ['var(--font-sans)', 'Plus Jakarta Sans', 'Inter', 'sans-serif'],
+        mono: ['var(--font-mono)', 'JetBrains Mono', 'IBM Plex Mono', 'monospace'],
       },
     },
   },

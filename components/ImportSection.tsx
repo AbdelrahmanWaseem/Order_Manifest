@@ -407,12 +407,12 @@ export default function ImportSection({
             ) : (
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-ink-rule bg-ink-night-2 font-mono text-[11px] text-stone-400">
-                    <th className="p-2.5 w-10 text-center">
+                  <tr className="border-b border-ink-rule bg-ink-night-2 font-mono text-xs font-bold uppercase tracking-wider text-stone-300">
+                    <th className="p-3 w-10 text-center">
                       <button
                         type="button"
                         onClick={toggleSelectAll}
-                        className="text-stone-400 hover:text-cream"
+                        className="text-stone-300 hover:text-cream"
                       >
                         {selectedOrderIds.size === recentOrders.length ? (
                           <CheckSquare className="w-4 h-4 text-stamp-ready" />
@@ -421,12 +421,12 @@ export default function ImportSection({
                         )}
                       </button>
                     </th>
-                    <th className="p-2.5">Order</th>
-                    <th className="p-2.5">Fulfillment</th>
-                    <th className="p-2.5">Customer</th>
-                    <th className="p-2.5">Items</th>
-                    <th className="p-2.5">Total</th>
-                    <th className="p-2.5">Placed</th>
+                    <th className="p-3">Order</th>
+                    <th className="p-3">Fulfillment</th>
+                    <th className="p-3">Customer</th>
+                    <th className="p-3">Items</th>
+                    <th className="p-3">Total</th>
+                    <th className="p-3">Placed</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-ink-rule/50">
@@ -442,11 +442,11 @@ export default function ImportSection({
                           isSelected ? 'bg-stamp-pending/10' : ''
                         }`}
                       >
-                        <td className="p-2.5 text-center" onClick={(e) => e.stopPropagation()}>
+                        <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
                           <button
                             type="button"
                             onClick={() => toggleSelectOrder(ord.id)}
-                            className="text-stone-400 hover:text-cream"
+                            className="text-stone-300 hover:text-cream"
                           >
                             {isSelected ? (
                               <CheckSquare className="w-4 h-4 text-stamp-ready" />
@@ -455,38 +455,38 @@ export default function ImportSection({
                             )}
                           </button>
                         </td>
-                        <td className="p-2.5 font-mono font-bold text-stamp-pending">
+                        <td className="p-3 font-mono font-extrabold text-sm text-stamp-pending">
                           {ord.name}
                           {isAlreadyImported && (
-                            <span className="ml-1.5 text-[9px] font-mono px-1.5 py-0.2 rounded bg-stone-800 text-stone-400">
+                            <span className="ml-2 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-stone-800 text-stone-300">
                               Imported
                             </span>
                           )}
                         </td>
-                        <td className="p-2.5 font-mono">
+                        <td className="p-3 font-mono">
                           {ord.fulfillmentStatus?.toUpperCase() === 'FULFILLED' ? (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-800/60">
+                            <span className="px-2.5 py-0.5 rounded text-xs font-bold bg-emerald-950/70 text-emerald-400 border border-emerald-800">
                               Fulfilled
                             </span>
                           ) : ord.fulfillmentStatus?.toUpperCase()?.includes('PARTIAL') ? (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-950/60 text-blue-400 border border-blue-800/60">
+                            <span className="px-2.5 py-0.5 rounded text-xs font-bold bg-blue-950/70 text-blue-400 border border-blue-800">
                               Partial
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-950/60 text-amber-400 border border-amber-800/60">
+                            <span className="px-2.5 py-0.5 rounded text-xs font-bold bg-amber-950/70 text-amber-400 border border-amber-800">
                               Unfulfilled
                             </span>
                           )}
                         </td>
-                        <td className="p-2.5 font-medium text-cream">{ord.customer}</td>
-                        <td className="p-2.5 text-stone-400">
-                          <span className="font-mono text-cream">{ord.itemCount}</span> items &middot;{' '}
-                          <span className="text-[11px] truncate inline-block max-w-[200px] align-bottom">
+                        <td className="p-3 font-bold text-sm text-cream">{ord.customer}</td>
+                        <td className="p-3 text-stone-300">
+                          <span className="font-mono font-bold text-cream">{ord.itemCount}</span> items &middot;{' '}
+                          <span className="text-xs truncate inline-block max-w-[220px] align-bottom font-medium">
                             {ord.items.map((i) => `${i.name} (${i.size})`).join(', ')}
                           </span>
                         </td>
-                        <td className="p-2.5 font-mono text-stone-300">{ord.totalPrice}</td>
-                        <td className="p-2.5 font-mono text-[11px] text-stone-500">
+                        <td className="p-3 font-mono font-bold text-xs text-stone-200">{ord.totalPrice}</td>
+                        <td className="p-3 font-mono text-xs font-medium text-stone-400">
                           {new Date(ord.createdAt).toLocaleDateString()}
                         </td>
                       </tr>

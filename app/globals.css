@@ -37,9 +37,26 @@ html.light {
 body {
   background-color: var(--ink-night);
   color: var(--cream);
-  font-family: var(--font-sans), 'Inter', sans-serif;
+  font-family: var(--font-sans), 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
   transition: background-color 0.15s ease, color 0.15s ease;
+  letter-spacing: -0.01em;
+}
+
+/* High contrast dark mode typography for maximum readability */
+html.dark .text-stone-300 {
+  color: #e2dfd7 !important;
+}
+html.dark .text-stone-400 {
+  color: #c5c1b6 !important;
+}
+html.dark .text-stone-500 {
+  color: #9e9a8f !important;
+}
+html.dark .text-stone-600 {
+  color: #7d796f !important;
 }
 
 /* Light mode overrides for text contrast and borders */

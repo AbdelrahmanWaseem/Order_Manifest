@@ -252,16 +252,16 @@ export default function ManualOrderModal({
         }}
       >
         {/* Modal Header */}
-        <div className="px-5 py-4 border-b border-ink-rule flex items-center justify-between bg-ink-night">
+        <div className="px-6 py-4.5 border-b border-ink-rule flex items-center justify-between bg-ink-night">
           <div>
             <div className="flex items-center gap-2.5">
               <span className="inline-block w-2.5 h-2.5 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.6)]"></span>
-              <h2 className="text-base font-bold text-cream">Create Manual Order</h2>
-              <span className="font-mono text-[10.5px] uppercase tracking-wider px-2 py-0.5 rounded bg-purple-950/80 text-purple-300 border border-purple-800/60">
+              <h2 className="text-lg font-extrabold text-cream tracking-tight">Create Manual Order</h2>
+              <span className="font-mono text-xs uppercase tracking-wider px-2.5 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800 font-bold">
                 Internal Ops
               </span>
             </div>
-            <p className="text-xs text-stone-400 mt-1">
+            <p className="text-xs text-stone-300 font-medium mt-1">
               Add offline, phone, or custom orders directly into the active manifest batch and database.
             </p>
           </div>
@@ -275,22 +275,22 @@ export default function ManualOrderModal({
         </div>
 
         {/* Modal Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-6">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
           {error && (
-            <div className="flex items-start gap-2.5 bg-red-950/50 border border-red-800/80 rounded p-3 text-red-200 text-xs">
+            <div className="flex items-start gap-2.5 bg-red-950/60 border border-red-700 rounded-md p-3.5 text-red-100 text-xs font-medium">
               <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
           {/* Customer Details Section */}
-          <div className="bg-ink-night border border-ink-rule/80 rounded-md p-4">
-            <h3 className="font-mono text-xs uppercase tracking-wider text-stone-400 font-semibold mb-3 flex items-center gap-2">
+          <div className="bg-ink-night border border-ink-rule rounded-lg p-4 sm:p-5 shadow-sm">
+            <h3 className="font-mono text-xs uppercase tracking-wider text-stone-200 font-extrabold mb-3 flex items-center gap-2">
               <span>1. Customer & Order Details</span>
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[11px] font-medium text-stone-300 mb-1">
+                <label className="block text-xs font-bold text-stone-200 mb-1.5">
                   Customer Name <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -299,58 +299,58 @@ export default function ManualOrderModal({
                   placeholder="e.g. Tarek Mansour"
                   value={customer}
                   onChange={(e) => setCustomer(e.target.value)}
-                  className="w-full bg-ink-night-2 border border-ink-rule rounded px-3 py-1.5 text-xs text-cream placeholder-stone-600 focus:outline-none focus:border-purple-500 transition"
+                  className="w-full bg-ink-night-2 border border-ink-rule rounded-md px-3.5 py-2 text-xs sm:text-sm font-medium text-cream placeholder-stone-500 focus:outline-none focus:border-purple-500 transition shadow-inner"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-stone-300 mb-1">
-                  Customer Phone <span className="text-stone-500 font-normal">(optional)</span>
+                <label className="block text-xs font-bold text-stone-200 mb-1.5">
+                  Customer Phone <span className="text-stone-400 font-normal">(optional)</span>
                 </label>
                 <input
                   type="tel"
                   placeholder="e.g. +20 100 123 4567"
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
-                  className="w-full bg-ink-night-2 border border-ink-rule rounded px-3 py-1.5 text-xs text-cream placeholder-stone-600 focus:outline-none focus:border-purple-500 transition"
+                  className="w-full bg-ink-night-2 border border-ink-rule rounded-md px-3.5 py-2 text-xs sm:text-sm font-medium text-cream placeholder-stone-500 focus:outline-none focus:border-purple-500 transition shadow-inner"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-stone-300 mb-1">
-                  Order # / Reference <span className="text-stone-500 font-normal">(auto MAN-XXXX if blank)</span>
+                <label className="block text-xs font-bold text-stone-200 mb-1.5">
+                  Order # / Reference <span className="text-stone-400 font-normal">(auto MAN-XXXX if blank)</span>
                 </label>
                 <input
                   type="text"
                   placeholder="e.g. MAN-1005 or #OFFLINE-22"
                   value={orderNumber}
                   onChange={(e) => setOrderNumber(e.target.value)}
-                  className="w-full bg-ink-night-2 border border-ink-rule rounded px-3 py-1.5 text-xs text-cream placeholder-stone-600 focus:outline-none focus:border-purple-500 transition font-mono"
+                  className="w-full bg-ink-night-2 border border-ink-rule rounded-md px-3.5 py-2 text-xs sm:text-sm font-bold text-cream placeholder-stone-500 focus:outline-none focus:border-purple-500 transition font-mono shadow-inner"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-stone-300 mb-1">
+                <label className="block text-xs font-bold text-stone-200 mb-1.5">
                   Order Date
                 </label>
                 <input
                   type="date"
                   value={orderDate}
                   onChange={(e) => setOrderDate(e.target.value)}
-                  className="w-full bg-ink-night-2 border border-ink-rule rounded px-3 py-1.5 text-xs text-cream focus:outline-none focus:border-purple-500 transition font-mono"
+                  className="w-full bg-ink-night-2 border border-ink-rule rounded-md px-3.5 py-2 text-xs sm:text-sm font-semibold text-cream focus:outline-none focus:border-purple-500 transition font-mono shadow-inner"
                 />
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-[11px] font-medium text-stone-300 mb-1">
-                  Order Notes <span className="text-stone-500 font-normal">(optional instructions or tracking info)</span>
+                <label className="block text-xs font-bold text-stone-200 mb-1.5">
+                  Order Notes <span className="text-stone-400 font-normal">(optional instructions or tracking info)</span>
                 </label>
                 <input
                   type="text"
                   placeholder="e.g. Delivery requested for weekend, customer contacted via WhatsApp"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full bg-ink-night-2 border border-ink-rule rounded px-3 py-1.5 text-xs text-cream placeholder-stone-600 focus:outline-none focus:border-purple-500 transition"
+                  className="w-full bg-ink-night-2 border border-ink-rule rounded-md px-3.5 py-2 text-xs sm:text-sm font-medium text-cream placeholder-stone-500 focus:outline-none focus:border-purple-500 transition shadow-inner"
                 />
               </div>
             </div>

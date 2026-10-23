@@ -32,23 +32,25 @@ export default function OrderGroup({
   return (
     <div className="mb-8">
       {/* Group Header */}
-      <div className="flex items-baseline justify-between gap-3 mb-3 flex-wrap">
-        <div className="flex items-baseline gap-2.5 flex-wrap">
-          <h3 className="text-base font-bold text-cream">{order.customer}</h3>
-          <span className="font-mono text-xs text-stamp-pending">{order.id}</span>
+      <div className="flex items-baseline justify-between gap-3 mb-3.5 flex-wrap">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <h3 className="text-lg md:text-xl font-extrabold text-cream tracking-tight">{order.customer}</h3>
+          <span className="font-mono text-xs font-extrabold px-2 py-0.5 rounded bg-stamp-pending/15 text-stamp-pending border border-stamp-pending/30">
+            {order.id}
+          </span>
           {(order.source === 'manual' || order.id.startsWith('MAN-')) && (
-            <span className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded-[3px] bg-purple-950/70 text-purple-300 border border-purple-800/60">
+            <span className="font-mono text-xs font-bold px-2.5 py-0.5 rounded-[4px] bg-purple-950 text-purple-300 border border-purple-800 shadow-sm">
               Manual Order
             </span>
           )}
           {order.fulfillmentStatus && (
             <span
-              className={`font-mono text-[10px] font-semibold px-2 py-0.5 rounded-[3px] border ${
+              className={`font-mono text-xs font-bold px-2.5 py-0.5 rounded-[4px] border shadow-sm ${
                 order.fulfillmentStatus.toUpperCase() === 'FULFILLED'
-                  ? 'bg-emerald-950/60 text-emerald-400 border-emerald-800/60'
+                  ? 'bg-emerald-950/70 text-emerald-400 border-emerald-800'
                   : order.fulfillmentStatus.toUpperCase().includes('PARTIAL')
-                  ? 'bg-blue-950/60 text-blue-400 border-blue-800/60'
-                  : 'bg-amber-950/60 text-amber-400 border-amber-800/60'
+                  ? 'bg-blue-950/70 text-blue-400 border-blue-800'
+                  : 'bg-amber-950/70 text-amber-400 border-amber-800'
               }`}
             >
               {order.fulfillmentStatus.toUpperCase() === 'FULFILLED'
@@ -59,20 +61,20 @@ export default function OrderGroup({
             </span>
           )}
           {order.customerPhone && (
-            <span className="font-mono text-[11px] text-stone-400">
+            <span className="font-mono text-xs font-semibold text-stone-300">
               📞 {order.customerPhone}
             </span>
           )}
           {order.orderDate && (
-            <span className="font-mono text-[11px] text-stone-500">
+            <span className="font-mono text-xs font-medium text-stone-400">
               📅 {new Date(order.orderDate).toLocaleDateString()}
             </span>
           )}
-          <span className="font-mono text-[11.5px] text-stone-500">
+          <span className="font-mono text-xs font-bold text-stone-400">
             {totalItemCount} item{totalItemCount > 1 ? 's' : ''}
           </span>
           {activeFilter && (
-            <span className="font-mono text-[11px] text-stone-400">
+            <span className="font-mono text-xs font-bold text-purple-400">
               ({filteredItems.length} of {totalItemCount} shown)
             </span>
           )}
@@ -82,7 +84,7 @@ export default function OrderGroup({
           <button
             type="button"
             onClick={() => onRemoveOrder(order.id)}
-            className="font-mono text-[10.5px] font-medium tracking-wider px-2 py-1 rounded-[3px] text-stone-400 hover:text-stamp-missing border border-ink-rule hover:border-stamp-missing transition cursor-pointer flex items-center gap-1"
+            className="font-mono text-xs font-semibold tracking-wider px-2.5 py-1 rounded-[4px] text-stone-400 hover:text-stamp-missing border border-ink-rule hover:border-stamp-missing transition cursor-pointer flex items-center gap-1"
             title="Remove this order from the board"
           >
             <span>✕</span>
@@ -92,7 +94,7 @@ export default function OrderGroup({
           <button
             type="button"
             onClick={() => onMarkAllReady(order.id)}
-            className="font-mono text-[10.5px] font-bold tracking-wider px-2.5 py-1 rounded-[3px] text-stamp-ready border border-stamp-ready hover:bg-stamp-ready hover:text-white transition cursor-pointer"
+            className="font-mono text-xs font-extrabold tracking-wider px-3 py-1 rounded-[4px] text-stamp-ready border border-stamp-ready hover:bg-stamp-ready hover:text-white transition cursor-pointer shadow-sm"
           >
             Mark all ready
           </button>
