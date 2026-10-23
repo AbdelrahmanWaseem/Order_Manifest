@@ -303,25 +303,25 @@ export default function ImportSection({
         </div>
 
         {/* Tab switchers & Manual Order button */}
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           {onOpenManualOrder && (
             <button
               type="button"
               onClick={onOpenManualOrder}
-              className="font-mono text-xs font-bold px-4 py-2 rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-md hover:shadow-indigo-500/25 transition-all duration-150 active:scale-95 flex items-center gap-1.5 cursor-pointer"
+              className="font-mono text-xs font-semibold px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition flex items-center gap-1.5 cursor-pointer"
             >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span>Create Manual Order</span>
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>Manual Order</span>
             </button>
           )}
 
-          <div className="flex rounded-xl bg-ink-night p-1 border border-ink-rule self-start shadow-inner">
+          <div className="flex rounded-lg bg-ink-night p-1 border border-ink-rule self-start">
             <button
               type="button"
               onClick={() => setActiveTab('browse')}
-              className={`text-xs px-3.5 py-1.5 font-bold rounded-lg transition-all ${
+              className={`text-xs px-3 py-1 font-semibold rounded-md transition ${
                 activeTab === 'browse'
-                  ? 'bg-ink-night-2 text-cream font-extrabold shadow-sm border border-ink-rule'
+                  ? 'bg-ink-night-2 text-cream font-bold shadow-sm border border-ink-rule'
                   : 'text-stone-400 hover:text-cream'
               }`}
             >
@@ -330,9 +330,9 @@ export default function ImportSection({
             <button
               type="button"
               onClick={() => setActiveTab('paste')}
-              className={`text-xs px-3.5 py-1.5 font-bold rounded-lg transition-all ${
+              className={`text-xs px-3 py-1 font-semibold rounded-md transition ${
                 activeTab === 'paste'
-                  ? 'bg-ink-night-2 text-cream font-extrabold shadow-sm border border-ink-rule'
+                  ? 'bg-ink-night-2 text-cream font-bold shadow-sm border border-ink-rule'
                   : 'text-stone-400 hover:text-cream'
               }`}
             >
@@ -510,10 +510,10 @@ export default function ImportSection({
                 type="button"
                 onClick={handleImportSelected}
                 disabled={selectedOrderIds.size === 0}
-                className="font-mono text-xs font-black tracking-wide px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-ink-dark shadow-md hover:shadow-lg transition-all duration-150 flex items-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
+                className="font-mono text-xs font-bold px-3.5 py-1.5 rounded-lg bg-stone-200 hover:bg-white text-stone-900 shadow-sm transition flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <span>Import {selectedOrderIds.size > 0 ? `(${selectedOrderIds.size})` : ''} Selected</span>
-                <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
@@ -530,15 +530,15 @@ export default function ImportSection({
             onChange={(e) => setRawInput(e.target.value)}
             onPaste={handlePaste}
             placeholder="Paste order numbers here, separated by comma, space, or newline&#10;e.g. 1001, 1002, 1005"
-            className="w-full min-h-[95px] bg-ink-night border border-ink-rule rounded-xl p-3.5 text-xs sm:text-sm font-mono font-medium text-cream resize-y focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all shadow-inner"
+            className="w-full min-h-[90px] bg-ink-night border border-ink-rule rounded-lg p-3 text-xs sm:text-sm font-mono text-cream resize-y focus:outline-none focus:border-stone-400 transition"
           />
 
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => performLookup()}
               disabled={fetching || !rawInput.trim()}
-              className="font-mono text-xs font-black tracking-wide px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-ink-dark shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              className="font-mono text-xs font-bold px-3.5 py-2 rounded-lg bg-stone-200 hover:bg-white text-stone-900 shadow-sm transition flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
             >
               {fetching ? (
                 <>
@@ -548,7 +548,7 @@ export default function ImportSection({
               ) : (
                 <>
                   <span>Fetch from Shopify</span>
-                  <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </>
               )}
             </button>
@@ -556,7 +556,7 @@ export default function ImportSection({
             <button
               type="button"
               onClick={loadSample}
-              className="font-mono text-xs font-semibold px-3.5 py-2.5 rounded-xl bg-ink-night hover:bg-stone-800 border border-ink-rule text-stone-300 hover:text-white transition cursor-pointer active:scale-95"
+              className="font-mono text-xs font-medium px-3 py-2 rounded-lg bg-ink-night hover:bg-ink-night-3 border border-ink-rule text-stone-300 transition cursor-pointer"
             >
               Load sample numbers
             </button>

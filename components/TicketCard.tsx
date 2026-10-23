@@ -33,53 +33,40 @@ export default function TicketCard({
     { border: string; bg: string; text: string; icon: React.ReactNode }
   > = {
     pending: {
-      border: 'border-amber-500',
-      bg: 'bg-amber-500/20',
-      text: 'text-amber-400',
+      border: 'border-amber-500/50',
+      bg: 'bg-amber-950/60',
+      text: 'text-amber-300',
       icon: <Clock className="w-4 h-4" />,
     },
     ready: {
-      border: 'border-emerald-500',
-      bg: 'bg-emerald-500/20',
-      text: 'text-emerald-400',
-      icon: <Check className="w-4 h-4 stroke-[3]" />,
+      border: 'border-emerald-500/50',
+      bg: 'bg-emerald-950/60',
+      text: 'text-emerald-300',
+      icon: <Check className="w-4 h-4 stroke-[2.5]" />,
     },
     incoming: {
-      border: 'border-blue-500',
-      bg: 'bg-blue-500/20',
-      text: 'text-blue-400',
+      border: 'border-blue-500/50',
+      bg: 'bg-blue-950/60',
+      text: 'text-blue-300',
       icon: <Clock className="w-4 h-4" />,
     },
     missing: {
-      border: 'border-rose-500',
-      bg: 'bg-rose-500/20',
-      text: 'text-rose-400',
+      border: 'border-rose-500/50',
+      bg: 'bg-rose-950/60',
+      text: 'text-rose-300',
       icon: <AlertOctagon className="w-4 h-4" />,
     },
   };
 
   return (
     <div
-      className={`ticket group transition-all duration-200 ${
-        isStamped ? 'ticket-stamped' : ''
+      className={`ticket group transition-all duration-150 ${
+        isStamped ? 'ticket-stamped opacity-85 hover:opacity-100' : ''
       }`}
       data-order-id={orderId}
       data-item-id={item.id}
     >
-      {/* Top accent bar indicating status */}
-      <div
-        className={`h-1 w-full transition-colors ${
-          item.status === 'ready'
-            ? 'bg-emerald-500'
-            : item.status === 'incoming'
-            ? 'bg-blue-500'
-            : item.status === 'missing'
-            ? 'bg-rose-500'
-            : 'bg-transparent group-hover:bg-violet-500/40'
-        }`}
-      />
-
-      <div className="p-4 flex flex-col justify-between h-full">
+      <div className="p-3.5 flex flex-col justify-between h-full">
         {/* Click zone on header & name to cycle status */}
         <div
           onClick={() => onCycleStatus(orderId, item.id)}
@@ -87,43 +74,41 @@ export default function TicketCard({
           title="Click to cycle status"
         >
           {/* Eyebrow: order ID + SKU */}
-          <div className="font-mono text-xs font-bold tracking-wider uppercase flex justify-between items-center text-stone-400 mb-1.5">
-            <span className="bg-ink-night px-2 py-0.5 rounded border border-ink-rule text-stamp-pending">
-              {orderId}
-            </span>
+          <div className="font-mono text-xs font-semibold uppercase flex justify-between items-center text-stone-400 mb-1">
+            <span className="font-bold text-stone-300">{orderId}</span>
             {item.sku && (
-              <span className="text-[11px] font-medium text-stone-400">
+              <span className="text-[11px] text-stone-500 font-mono">
                 {item.sku}
               </span>
             )}
           </div>
 
           {/* Product Name */}
-          <h4 className="font-extrabold text-[15px] sm:text-base leading-snug my-1 text-cream tracking-tight group-hover:text-purple-300 transition-colors">
+          <h4 className="font-bold text-[14.5px] leading-snug my-1 text-cream tracking-tight">
             {item.name}
           </h4>
 
           {/* Brand, Size, Qty */}
-          <div className="font-mono text-xs text-stone-300 flex items-center flex-wrap gap-2 mt-1.5">
-            <div className="flex items-center gap-1.5 font-bold">
+          <div className="font-mono text-xs text-stone-300 flex items-center flex-wrap gap-1.5 mt-1">
+            <div className="flex items-center gap-1 font-semibold">
               <span
-                className="w-2.5 h-2.5 rounded-full inline-block shrink-0 shadow-sm"
+                className="w-2 h-2 rounded-full inline-block shrink-0 opacity-80"
                 style={{ backgroundColor: item.brandColor }}
               />
               <span>{item.brand}</span>
             </div>
             <span className="text-stone-500">&middot;</span>
-            <span className="font-bold px-2 py-0.5 rounded bg-ink-night border border-ink-rule text-cream">
-              Size {item.size}
+            <span className="font-semibold text-stone-200">
+              sz {item.size}
             </span>
             {item.color && (
               <>
                 <span className="text-stone-500">&middot;</span>
-                <span className="text-stone-300">{item.color}</span>
+                <span className="text-stone-400">{item.color}</span>
               </>
             )}
             {item.quantity > 1 && (
-              <span className="bg-violet-500/20 text-violet-300 border border-violet-500/30 px-2 py-0.5 rounded font-black">
+              <span className="bg-ink-night-3 px-1.5 py-0.2 rounded text-stone-200 font-bold border border-ink-rule">
                 &times;{item.quantity}
               </span>
             )}
@@ -131,21 +116,21 @@ export default function TicketCard({
 
           {/* Stock inventory indicator */}
           {item.inventoryQuantity !== null && (
-            <div className="mt-2.5 flex items-center gap-2 font-mono text-xs flex-wrap">
+            <div className="mt-2 flex items-center gap-2 font-mono text-[11px] flex-wrap">
               <span
-                className={`px-2 py-0.5 rounded-md text-[11px] font-bold tracking-wide border ${
+                className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${
                   item.inventoryQuantity >= item.quantity
-                    ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                    ? 'bg-emerald-950/40 text-emerald-300 border-emerald-800/40'
                     : item.inventoryQuantity > 0
-                    ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
-                    : 'bg-rose-500/15 text-rose-400 border-rose-500/30'
+                    ? 'bg-amber-950/40 text-amber-300 border-amber-800/40'
+                    : 'bg-rose-950/40 text-rose-300 border-rose-800/40'
                 }`}
               >
                 Stock: {item.inventoryQuantity}
               </span>
               {item.suggestReady && item.status === 'pending' && (
-                <span className="text-emerald-400 font-bold text-[11px] flex items-center gap-1">
-                  <span>✓</span> Suggest Ready
+                <span className="text-emerald-400 font-medium text-[11px]">
+                  &bull; Suggest Ready
                 </span>
               )}
             </div>
@@ -153,14 +138,14 @@ export default function TicketCard({
         </div>
 
         {/* Bottom Section: Note field + Stamp Buttons */}
-        <div className="mt-3.5 pt-3 border-t border-ink-rule/70 space-y-2.5">
+        <div className="mt-3 pt-2.5 border-t border-ink-rule space-y-2">
           {/* Note input */}
           <input
             type="text"
-            placeholder="Add note (e.g. arriving soon, replacement)…"
+            placeholder="Add note…"
             value={item.note}
             onChange={(e) => onSetNote(orderId, item.id, e.target.value)}
-            className="w-full text-xs font-mono font-medium bg-ink-night/60 border border-ink-rule rounded-lg px-3 py-1.5 text-cream placeholder-stone-500 focus:outline-none focus:border-purple-500 focus:bg-ink-night transition shadow-inner"
+            className="w-full text-xs font-mono bg-ink-night border border-ink-rule rounded-md px-2.5 py-1 text-cream placeholder-stone-500 focus:outline-none focus:border-stone-400 transition"
           />
 
           {/* Stamp action buttons */}
@@ -168,21 +153,21 @@ export default function TicketCard({
             <button
               type="button"
               onClick={() => onSetStatus(orderId, item.id, 'ready')}
-              className="font-mono text-xs font-extrabold tracking-wider py-2 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500 hover:text-white border border-emerald-500/30 transition-all duration-150 active:scale-95 cursor-pointer shadow-sm text-center"
+              className="font-mono text-xs font-bold tracking-wider py-1.5 rounded-md bg-emerald-950/30 text-emerald-300 hover:bg-emerald-700 hover:text-white border border-emerald-800/40 transition-colors duration-150 active:scale-95 cursor-pointer text-center"
             >
               READY
             </button>
             <button
               type="button"
               onClick={() => onSetStatus(orderId, item.id, 'incoming')}
-              className="font-mono text-xs font-extrabold tracking-wider py-2 rounded-lg bg-blue-500/15 text-blue-400 hover:bg-blue-500 hover:text-white border border-blue-500/30 transition-all duration-150 active:scale-95 cursor-pointer shadow-sm text-center"
+              className="font-mono text-xs font-bold tracking-wider py-1.5 rounded-md bg-blue-950/30 text-blue-300 hover:bg-blue-700 hover:text-white border border-blue-800/40 transition-colors duration-150 active:scale-95 cursor-pointer text-center"
             >
               INCOMING
             </button>
             <button
               type="button"
               onClick={() => onSetStatus(orderId, item.id, 'missing')}
-              className="font-mono text-xs font-extrabold tracking-wider py-2 rounded-lg bg-rose-500/15 text-rose-400 hover:bg-rose-500 hover:text-white border border-rose-500/30 transition-all duration-150 active:scale-95 cursor-pointer shadow-sm text-center"
+              className="font-mono text-xs font-bold tracking-wider py-1.5 rounded-md bg-rose-950/30 text-rose-300 hover:bg-rose-700 hover:text-white border border-rose-800/40 transition-colors duration-150 active:scale-95 cursor-pointer text-center"
             >
               MISSING
             </button>
@@ -195,11 +180,11 @@ export default function TicketCard({
         <>
           <div
             onClick={() => onCycleStatus(orderId, item.id)}
-            className="absolute inset-0 flex items-center justify-center bg-black/60 dark:bg-black/75 backdrop-blur-[2px] cursor-pointer z-10 transition-all duration-200"
+            className="absolute inset-0 flex items-center justify-center bg-black/50 dark:bg-black/60 backdrop-blur-[1px] cursor-pointer z-10 transition-all duration-150"
             title="Click to cycle status"
           >
             <div
-              className={`font-mono font-black text-base sm:text-lg tracking-wider border-2 px-4 py-2 rounded-xl uppercase select-none shadow-2xl flex items-center gap-2 transform -rotate-3 hover:scale-105 transition-transform ${
+              className={`font-mono font-bold text-sm sm:text-base tracking-wider border px-3.5 py-1.5 rounded-lg uppercase select-none shadow-md flex items-center gap-1.5 transform -rotate-2 ${
                 stampConfig[item.status].bg
               } ${stampConfig[item.status].border} ${stampConfig[item.status].text}`}
             >
@@ -214,7 +199,7 @@ export default function TicketCard({
               e.stopPropagation();
               onSetStatus(orderId, item.id, 'pending');
             }}
-            className="absolute bottom-2.5 right-3 text-xs font-mono font-bold text-stone-300 hover:text-white bg-ink-night/90 hover:bg-ink-night border border-ink-rule rounded-md px-2 py-1 shadow-md transition-all cursor-pointer z-20 flex items-center gap-1 active:scale-95"
+            className="absolute bottom-2 right-2 text-xs font-mono font-medium text-stone-400 hover:text-white bg-ink-night border border-ink-rule rounded px-2 py-0.5 shadow-sm transition cursor-pointer z-20 flex items-center gap-1"
             title="Reset status back to Pending"
           >
             <RotateCcw className="w-3 h-3" />

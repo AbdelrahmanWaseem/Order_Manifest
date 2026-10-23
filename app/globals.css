@@ -3,37 +3,37 @@
 @tailwind utilities;
 
 :root, html.dark {
-  --ink-night: #0b0c0f;
-  --ink-night-2: #13151b;
-  --ink-night-3: #1a1d26;
-  --ink-rule: #252836;
-  --paper: #13151b;
-  --paper-2: #1a1d26;
-  --paper-rule: #252836;
-  --ink-dark: #f8fafc;
-  --ink-soft: #94a3b8;
-  --stamp-ready: #10b981;
-  --stamp-incoming: #3b82f6;
-  --stamp-missing: #f43f5e;
-  --stamp-pending: #f59e0b;
-  --cream: #f8fafc;
+  --ink-night: #121316;
+  --ink-night-2: #18191f;
+  --ink-night-3: #22242c;
+  --ink-rule: #2a2c36;
+  --paper: #18191f;
+  --paper-2: #22242c;
+  --paper-rule: #2a2c36;
+  --ink-dark: #f1f2f6;
+  --ink-soft: #9499a8;
+  --stamp-ready: #34d399;
+  --stamp-incoming: #60a5fa;
+  --stamp-missing: #f87171;
+  --stamp-pending: #fbbf24;
+  --cream: #ededf2;
 }
 
 html.light {
-  --ink-night: #f8fafc;
+  --ink-night: #f6f7fa;
   --ink-night-2: #ffffff;
-  --ink-night-3: #f1f5f9;
-  --ink-rule: #e2e8f0;
+  --ink-night-3: #f0f2f5;
+  --ink-rule: #e2e4ea;
   --paper: #ffffff;
   --paper-2: #f8fafc;
-  --paper-rule: #e2e8f0;
-  --ink-dark: #0f172a;
+  --paper-rule: #e2e4ea;
+  --ink-dark: #18191f;
   --ink-soft: #64748b;
   --stamp-ready: #059669;
   --stamp-incoming: #2563eb;
-  --stamp-missing: #e11d48;
+  --stamp-missing: #dc2626;
   --stamp-pending: #d97706;
-  --cream: #0f172a;
+  --cream: #18191f;
 }
 
 body {
@@ -44,10 +44,20 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   transition: background-color 0.2s ease, color 0.2s ease;
-  letter-spacing: -0.012em;
+  letter-spacing: -0.01em;
 }
 
-/* Light mode overrides for clean contrast and borders */
+/* Calm, eye-friendly text contrast */
+html.dark .text-stone-300 {
+  color: #c9ccd6 !important;
+}
+html.dark .text-stone-400 {
+  color: #9499a8 !important;
+}
+html.dark .text-stone-500 {
+  color: #6b7080 !important;
+}
+
 html.light .text-stone-300 {
   color: #334155 !important;
 }
@@ -55,11 +65,11 @@ html.light .text-stone-400 {
   color: #64748b !important;
 }
 html.light .text-stone-500 {
-  color: #64748b !important;
+  color: #94a3b8 !important;
 }
 html.light .bg-stone-800 {
-  background-color: #f1f5f9 !important;
-  color: #0f172a !important;
+  background-color: #f1f3f6 !important;
+  color: #1e293b !important;
 }
 html.light .bg-stone-900 {
   background-color: #f8fafc !important;
@@ -68,10 +78,10 @@ html.light .bg-stone-900\/60 {
   background-color: #f8fafc !important;
 }
 html.light .hover\:bg-stone-900\/60:hover {
-  background-color: #f1f5f9 !important;
+  background-color: #f1f3f6 !important;
 }
 html.light .hover\:bg-stone-800:hover {
-  background-color: #e2e8f0 !important;
+  background-color: #e5e7eb !important;
 }
 html.light input,
 html.light textarea {
@@ -83,38 +93,33 @@ html.light textarea::placeholder {
   color: #94a3b8 !important;
 }
 
-/* Modern Card Styling */
+/* Modern Minimalist Card */
 .ticket {
   position: relative;
   background: var(--paper);
   color: var(--ink-dark);
   border: 1px solid var(--ink-rule);
-  border-radius: 14px;
-  box-shadow: 0 4px 18px -2px rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px -1px rgba(0, 0, 0, 0.15);
   overflow: hidden;
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
 .ticket:hover {
   transform: translateY(-2px);
-  border-color: rgba(139, 92, 246, 0.4);
-  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.3);
+  border-color: #4b5163;
+  box-shadow: 0 8px 20px -2px rgba(0, 0, 0, 0.25);
 }
 
 html.light .ticket {
   background: #ffffff;
-  border-color: #e2e8f0;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+  border-color: #e5e7eb;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
 }
 
 html.light .ticket:hover {
-  border-color: #c084fc;
-  box-shadow: 0 10px 24px -2px rgba(15, 23, 42, 0.1);
-}
-
-/* Stamped active state on tickets */
-.ticket-stamped {
-  border-color: var(--ink-rule);
+  border-color: #cbd5e1;
+  box-shadow: 0 6px 16px -2px rgba(15, 23, 42, 0.08);
 }
 
 .font-mono {
@@ -123,8 +128,8 @@ html.light .ticket:hover {
 
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: var(--ink-night);
@@ -134,53 +139,16 @@ html.light .ticket:hover {
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #4b5163;
 }
 
 /* Print Styles */
 @media print {
   body {
     background: #fff !important;
-    color: #0f172a !important;
+    color: #18191f !important;
   }
   .no-print {
     display: none !important;
-  }
-}
-
-/* Custom Scrollbars */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-track {
-  background: var(--ink-night);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--ink-rule);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #5a5847;
-}
-
-/* Print Styles */
-@media print {
-  body {
-    background: #fff !important;
-    color: #14151a !important;
-  }
-  .no-print {
-    display: none !important;
-  }
-  .report-doc {
-    display: block !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    background: transparent !important;
-  }
-  .order-card {
-    page-break-inside: avoid;
   }
 }

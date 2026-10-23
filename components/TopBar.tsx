@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ItemStatus } from '@/types/manifest';
-import { Sun, Moon, Plus, Sparkles } from 'lucide-react';
+import { Sun, Moon, Plus } from 'lucide-react';
 
 interface TopBarProps {
   counts: Record<ItemStatus, number>;
@@ -47,91 +47,79 @@ export default function TopBar({
   const chips: Array<{
     key: ItemStatus;
     label: string;
-    color: string;
-    activeBg: string;
-    borderActive: string;
+    dotColor: string;
+    activeStyles: string;
   }> = [
     {
       key: 'pending',
       label: 'Pending',
-      color: '#f59e0b',
-      activeBg: 'bg-amber-500/15 text-amber-300 dark:text-amber-200',
-      borderActive: 'border-amber-500/60 ring-1 ring-amber-500/30',
+      dotColor: '#f59e0b',
+      activeStyles: 'bg-amber-500/10 text-amber-300 border-amber-500/40 shadow-sm font-bold',
     },
     {
       key: 'ready',
       label: 'Ready',
-      color: '#10b981',
-      activeBg: 'bg-emerald-500/15 text-emerald-400 dark:text-emerald-300',
-      borderActive: 'border-emerald-500/60 ring-1 ring-emerald-500/30',
+      dotColor: '#10b981',
+      activeStyles: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/40 shadow-sm font-bold',
     },
     {
       key: 'incoming',
       label: 'Incoming',
-      color: '#3b82f6',
-      activeBg: 'bg-blue-500/15 text-blue-400 dark:text-blue-300',
-      borderActive: 'border-blue-500/60 ring-1 ring-blue-500/30',
+      dotColor: '#60a5fa',
+      activeStyles: 'bg-blue-500/10 text-blue-300 border-blue-500/40 shadow-sm font-bold',
     },
     {
       key: 'missing',
       label: 'Missing',
-      color: '#f43f5e',
-      activeBg: 'bg-rose-500/15 text-rose-400 dark:text-rose-300',
-      borderActive: 'border-rose-500/60 ring-1 ring-rose-500/30',
+      dotColor: '#f87171',
+      activeStyles: 'bg-rose-500/10 text-rose-300 border-rose-500/40 shadow-sm font-bold',
     },
   ];
 
   return (
-    <header className="border-b border-ink-rule pb-5 mb-7">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <header className="border-b border-ink-rule pb-4 mb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5">
         {/* Left: Brand & Title */}
         <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="font-mono text-[11px] font-bold tracking-[0.2em] uppercase text-stamp-pending bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="font-mono text-[11px] font-bold tracking-widest uppercase text-stone-400">
               Essentials EG Ops
             </span>
-            <div className="flex items-center gap-1.5 text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20 font-semibold">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
+            <div className="flex items-center gap-1.5 text-[11px] font-mono text-stone-400 bg-ink-night-2 px-2 py-0.5 rounded border border-ink-rule font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/90"></span>
               <span>Shopify Live</span>
             </div>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-cream flex items-center gap-2.5">
-            <span>Order Manifest</span>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-cream">
+            Order Manifest
           </h1>
         </div>
 
         {/* Right: Actions, Filters & Circled Theme Toggle */}
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* Status Filter Pills */}
-          <div className="flex gap-1.5 p-1 bg-ink-night-2/90 border border-ink-rule rounded-xl shadow-sm backdrop-blur-sm flex-wrap">
-            {chips.map(({ key, label, color, activeBg, borderActive }) => {
+          <div className="flex gap-1 p-1 bg-ink-night-2 border border-ink-rule rounded-xl shadow-sm flex-wrap">
+            {chips.map(({ key, label, dotColor, activeStyles }) => {
               const isActive = activeFilter === key;
               return (
                 <button
                   key={key}
                   type="button"
                   onClick={() => onToggleFilter(key)}
-                  className={`font-mono text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all duration-150 cursor-pointer flex items-center gap-2 ${
+                  className={`font-mono text-xs px-3 py-1.5 rounded-lg border transition-all duration-150 cursor-pointer flex items-center gap-2 ${
                     isActive
-                      ? `${activeBg} ${borderActive} shadow-sm font-bold`
-                      : 'border-transparent text-stone-300 hover:text-white hover:bg-ink-night-3/70'
+                      ? activeStyles
+                      : 'border-transparent text-stone-400 hover:text-cream hover:bg-ink-night-3/60'
                   }`}
                   title={`Filter board by ${label}`}
                 >
                   <span
                     className="w-2 h-2 rounded-full shrink-0"
-                    style={{ backgroundColor: color }}
+                    style={{ backgroundColor: dotColor }}
                   />
                   <span>{label}</span>
-                  <span
-                    className={`text-xs px-1.5 py-0.2 rounded font-extrabold ${
-                      isActive ? 'bg-black/20' : 'bg-ink-rule/60 text-stone-200'
-                    }`}
-                  >
+                  <span className="text-xs px-1.5 py-0.2 rounded font-mono font-bold bg-ink-night border border-ink-rule/60 text-stone-300">
                     {counts[key]}
                   </span>
                 </button>
@@ -139,16 +127,16 @@ export default function TopBar({
             })}
           </div>
 
-          {/* Create Manual Order Modern Button */}
+          {/* Create Manual Order Button */}
           {onOpenManualOrder && (
             <button
               type="button"
               onClick={onOpenManualOrder}
-              className="font-mono text-xs font-bold px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-[0_4px_14px_rgba(139,92,246,0.35)] hover:shadow-[0_6px_20px_rgba(139,92,246,0.5)] transition-all duration-150 active:scale-95 flex items-center gap-1.5 cursor-pointer ml-1"
+              className="font-mono text-xs font-bold px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition-all duration-150 active:scale-95 flex items-center gap-1.5 cursor-pointer ml-1"
               title="Create a manual internal order"
             >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span className="tracking-wide">Manual Order</span>
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>Manual Order</span>
             </button>
           )}
 
@@ -156,14 +144,14 @@ export default function TopBar({
           <button
             type="button"
             onClick={toggleTheme}
-            className="w-10 h-10 rounded-full border border-ink-rule bg-ink-night-2/90 hover:bg-ink-night-3 text-cream flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200 active:scale-95 cursor-pointer shrink-0 ml-auto sm:ml-1"
+            className="w-9 h-9 rounded-full border border-ink-rule bg-ink-night-2 hover:bg-ink-night-3 text-stone-300 hover:text-white flex items-center justify-center shadow-sm transition-all duration-150 active:scale-95 cursor-pointer shrink-0 ml-auto sm:ml-1"
             title={`Switch to ${mounted && theme === 'light' ? 'Dark' : 'Light'} mode`}
             aria-label="Toggle theme"
           >
             {mounted && theme === 'light' ? (
-              <Moon className="w-4 h-4 text-indigo-500 fill-indigo-500/20 transition-transform hover:-rotate-12 duration-200" />
+              <Moon className="w-4 h-4 text-slate-700" />
             ) : (
-              <Sun className="w-4 h-4 text-amber-400 fill-amber-400/20 transition-transform hover:rotate-45 duration-200" />
+              <Sun className="w-4 h-4 text-amber-400" />
             )}
           </button>
         </div>

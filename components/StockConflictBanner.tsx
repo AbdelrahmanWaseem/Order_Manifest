@@ -12,19 +12,17 @@ export default function StockConflictBanner({ conflicts }: StockConflictBannerPr
   if (conflicts.length === 0) return null;
 
   return (
-    <div className="mb-7 bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 sm:p-5 text-xs text-amber-200 shadow-lg backdrop-blur-md">
-      <div className="flex items-start gap-3">
-        <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center shrink-0 text-amber-400">
-          <AlertTriangle className="w-4 h-4" />
-        </div>
-        <div className="space-y-1.5 flex-1">
-          <div className="font-extrabold text-sm text-cream tracking-tight">
+    <div className="mb-6 bg-amber-950/20 border border-amber-800/40 rounded-xl p-3.5 sm:p-4 text-xs text-stone-300 shadow-sm">
+      <div className="flex items-start gap-2.5">
+        <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+        <div className="space-y-1 flex-1">
+          <div className="font-bold text-cream">
             Possible Stock Allocation Conflicts
           </div>
-          <p className="text-xs text-stone-300">
+          <p className="text-xs text-stone-400">
             These items are marked Ready across multiple orders or exceed available inventory in Shopify:
           </p>
-          <div className="divide-y divide-amber-500/15 pt-1">
+          <div className="divide-y divide-ink-rule/60 pt-1">
             {conflicts.map((c) => {
               const orderClaims = c.orders.map((o) => `${o.orderId} (${o.customer})`).join(', ');
               const stockNotice =
@@ -33,10 +31,10 @@ export default function StockConflictBanner({ conflicts }: StockConflictBannerPr
                   : '';
 
               return (
-                <div key={c.key} className="py-1.5 text-xs text-amber-200 font-medium">
-                  <span className="font-extrabold text-white">{c.brand}</span> — {c.name} (sz {c.size}):{' '}
-                  claimed by <span className="underline font-bold text-cream">{orderClaims}</span>
-                  <span className="font-mono text-xs text-amber-400 font-bold ml-1">{stockNotice}</span>
+                <div key={c.key} className="py-1 text-xs text-stone-300">
+                  <span className="font-semibold text-cream">{c.brand}</span> — {c.name} (sz {c.size}):{' '}
+                  claimed by <span className="underline text-stone-200">{orderClaims}</span>
+                  <span className="font-mono text-xs text-amber-300 ml-1">{stockNotice}</span>
                 </div>
               );
             })}

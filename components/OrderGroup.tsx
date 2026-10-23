@@ -3,7 +3,7 @@
 import React from 'react';
 import { ManifestOrder, ManifestItem, ItemStatus } from '@/types/manifest';
 import TicketCard from './TicketCard';
-import { User, Phone, Calendar, CheckCircle2, Trash2 } from 'lucide-react';
+import { Phone, Calendar, Check, Trash2 } from 'lucide-react';
 
 interface OrderGroupProps {
   order: ManifestOrder;
@@ -42,54 +42,54 @@ export default function OrderGroup({
   const isManual = order.source === 'manual' || order.id.startsWith('MAN-');
 
   return (
-    <div className="mb-9 bg-ink-night-2/60 border border-ink-rule/80 rounded-2xl p-4 sm:p-5 shadow-sm backdrop-blur-sm">
+    <div className="mb-8 bg-ink-night-2 border border-ink-rule rounded-xl p-4 sm:p-5 shadow-sm">
       {/* Group Header */}
-      <div className="flex items-center justify-between gap-3 mb-4 pb-3.5 border-b border-ink-rule/70 flex-wrap">
-        <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex items-center justify-between gap-3 mb-3.5 pb-3 border-b border-ink-rule flex-wrap">
+        <div className="flex items-center gap-2.5 flex-wrap">
           {/* Customer Avatar */}
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white font-extrabold flex items-center justify-center text-xs shadow-md shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-ink-night-3 border border-ink-rule text-stone-300 font-bold flex items-center justify-center text-xs shrink-0">
             {initials}
           </div>
 
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-lg sm:text-xl font-extrabold text-cream tracking-tight">
+              <h3 className="text-base sm:text-lg font-bold text-cream tracking-tight">
                 {order.customer}
               </h3>
 
-              <span className="font-mono text-xs font-black px-2.5 py-0.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/30">
+              <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-ink-night border border-ink-rule text-stone-300">
                 {order.id}
               </span>
 
               {isManual && (
-                <span className="font-mono text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-purple-500/15 text-purple-300 border border-purple-500/30 shadow-sm">
+                <span className="font-mono text-[11px] font-medium px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
                   Manual Order
                 </span>
               )}
 
               {order.fulfillmentStatus && (
                 <span
-                  className={`font-mono text-[11px] font-bold px-2.5 py-0.5 rounded-lg border shadow-sm ${
+                  className={`font-mono text-[11px] font-medium px-2 py-0.5 rounded border ${
                     order.fulfillmentStatus.toUpperCase() === 'FULFILLED'
-                      ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                      ? 'bg-emerald-950/40 text-emerald-300 border-emerald-800/40'
                       : order.fulfillmentStatus.toUpperCase().includes('PARTIAL')
-                      ? 'bg-blue-500/15 text-blue-400 border-blue-500/30'
-                      : 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                      ? 'bg-blue-950/40 text-blue-300 border-blue-800/40'
+                      : 'bg-amber-950/40 text-amber-300 border-amber-800/40'
                   }`}
                 >
                   {order.fulfillmentStatus.toUpperCase() === 'FULFILLED'
                     ? 'Fulfilled'
                     : order.fulfillmentStatus.toUpperCase().includes('PARTIAL')
-                    ? 'Partially Fulfilled'
+                    ? 'Partial'
                     : 'Unfulfilled'}
                 </span>
               )}
             </div>
 
             {/* Sub-row metadata: phone, date, items count */}
-            <div className="flex items-center gap-3 text-xs text-stone-400 font-mono mt-1 flex-wrap">
+            <div className="flex items-center gap-3 text-xs text-stone-400 font-mono mt-0.5 flex-wrap">
               {order.customerPhone && (
-                <span className="flex items-center gap-1 text-stone-300 font-medium">
+                <span className="flex items-center gap-1 text-stone-300">
                   <Phone className="w-3 h-3 text-stone-400" />
                   <span>{order.customerPhone}</span>
                 </span>
@@ -102,12 +102,12 @@ export default function OrderGroup({
                 </span>
               )}
 
-              <span className="text-stone-300 font-bold">
+              <span className="text-stone-300">
                 {totalItemCount} item{totalItemCount > 1 ? 's' : ''}
               </span>
 
               {activeFilter && (
-                <span className="text-purple-400 font-bold">
+                <span className="text-stone-400">
                   ({filteredItems.length} matching filter)
                 </span>
               )}
@@ -120,7 +120,7 @@ export default function OrderGroup({
           <button
             type="button"
             onClick={() => onRemoveOrder(order.id)}
-            className="font-mono text-xs font-semibold px-3 py-1.5 rounded-lg text-stone-400 hover:text-rose-400 hover:bg-rose-500/10 border border-ink-rule hover:border-rose-500/30 transition-all duration-150 cursor-pointer flex items-center gap-1.5 active:scale-95"
+            className="font-mono text-xs font-medium px-2.5 py-1.5 rounded-lg text-stone-400 hover:text-stone-200 hover:bg-ink-night-3 border border-ink-rule transition cursor-pointer flex items-center gap-1"
             title="Remove this order from the manifest"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -130,9 +130,9 @@ export default function OrderGroup({
           <button
             type="button"
             onClick={() => onMarkAllReady(order.id)}
-            className="font-mono text-xs font-extrabold tracking-wider px-3.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/30 transition-all duration-150 active:scale-95 cursor-pointer shadow-sm flex items-center gap-1.5"
+            className="font-mono text-xs font-semibold px-3 py-1.5 rounded-lg bg-emerald-950/30 hover:bg-emerald-800 text-emerald-300 hover:text-white border border-emerald-800/40 transition cursor-pointer flex items-center gap-1"
           >
-            <CheckCircle2 className="w-3.5 h-3.5" />
+            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Mark all ready</span>
           </button>
         </div>
@@ -140,8 +140,8 @@ export default function OrderGroup({
 
       {/* Order Notes Banner */}
       {order.notes && (
-        <div className="text-xs text-stone-200 bg-ink-night border border-ink-rule rounded-xl px-3.5 py-2 mb-4 flex items-start gap-2 shadow-inner">
-          <span className="font-mono text-[10px] uppercase font-bold text-purple-400 shrink-0 mt-0.5">
+        <div className="text-xs text-stone-300 bg-ink-night border border-ink-rule rounded-lg px-3 py-1.5 mb-3.5 flex items-start gap-2">
+          <span className="font-mono text-[10px] uppercase font-bold text-stone-400 shrink-0 mt-0.5">
             Note:
           </span>
           <span className="italic">{order.notes}</span>
@@ -149,7 +149,7 @@ export default function OrderGroup({
       )}
 
       {/* Tickets Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
         {filteredItems.map((item) => (
           <TicketCard
             key={item.id}
