@@ -2,16 +2,18 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { ShopifyOrderSummary } from '@/lib/shopify';
-import { Loader2, Search, ArrowRight, CheckSquare, Square, ChevronLeft, ChevronRight, RefreshCw, AlertCircle } from 'lucide-react';
+import { Loader2, Search, ArrowRight, CheckSquare, Square, ChevronLeft, ChevronRight, RefreshCw, AlertCircle, Plus } from 'lucide-react';
 
 interface ImportSectionProps {
   onImportOrders: (orders: ShopifyOrderSummary[]) => void;
   existingOrderIds: string[]; // e.g. ["#1001", "#1002"]
+  onOpenManualOrder?: () => void;
 }
 
 export default function ImportSection({
   onImportOrders,
   existingOrderIds,
+  onOpenManualOrder,
 }: ImportSectionProps) {
   const [activeTab, setActiveTab] = useState<'paste' | 'browse'>('browse');
 
@@ -300,30 +302,43 @@ export default function ImportSection({
           </p>
         </div>
 
-        {/* Tab switchers */}
-        <div className="flex rounded bg-ink-night p-1 border border-ink-rule self-start">
-          <button
-            type="button"
-            onClick={() => setActiveTab('browse')}
-            className={`text-xs px-3 py-1 font-medium rounded transition ${
-              activeTab === 'browse'
-                ? 'bg-ink-rule text-cream font-semibold'
-                : 'text-stone-400 hover:text-cream'
-            }`}
-          >
-            Browse Shopify Store
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('paste')}
-            className={`text-xs px-3 py-1 font-medium rounded transition ${
-              activeTab === 'paste'
-                ? 'bg-ink-rule text-cream font-semibold'
-                : 'text-stone-400 hover:text-cream'
-            }`}
-          >
-            Paste Order #s
-          </button>
+        {/* Tab switchers & Manual Order button */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {onOpenManualOrder && (
+            <button
+              type="button"
+              onClick={onOpenManualOrder}
+              className="font-mono text-xs font-bold px-3 py-1.5 rounded bg-purple-600 hover:bg-purple-500 text-white shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Create Manual Order</span>
+            </button>
+          )}
+
+          <div className="flex rounded bg-ink-night p-1 border border-ink-rule self-start">
+            <button
+              type="button"
+              onClick={() => setActiveTab('browse')}
+              className={`text-xs px-3 py-1 font-medium rounded transition ${
+                activeTab === 'browse'
+                  ? 'bg-ink-rule text-cream font-semibold'
+                  : 'text-stone-400 hover:text-cream'
+              }`}
+            >
+              Browse Shopify Store
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('paste')}
+              className={`text-xs px-3 py-1 font-medium rounded transition ${
+                activeTab === 'paste'
+                  ? 'bg-ink-rule text-cream font-semibold'
+                  : 'text-stone-400 hover:text-cream'
+              }`}
+            >
+              Paste Order #s
+            </button>
+          </div>
         </div>
       </div>
 

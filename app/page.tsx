@@ -4,24 +4,34 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import TopBar from '@/components/TopBar';
 import ImportSection from '@/components/ImportSection';
 import StockConflictBanner from '@/components/StockConflictBanner';
-import BoardToolbar from '@/components/BoardToolbar';
+import AdvancedFilterBar from '@/components/AdvancedFilterBar';
 import OrderGroup from '@/components/OrderGroup';
 import ShipmentReportBar from '@/components/ShipmentReportBar';
 import ReportView from '@/components/ReportView';
 import ArchiveModal from '@/components/ArchiveModal';
+import ManualOrderModal from '@/components/ManualOrderModal';
 import { ShopifyOrderSummary } from '@/lib/shopify';
-import { ManifestOrder, ManifestItem, ItemStatus, StockConflict, ReportSnapshot } from '@/types/manifest';
-import { Loader2 } from 'lucide-react';
+import {
+  ManifestOrder,
+  ManifestItem,
+  ItemStatus,
+  StockConflict,
+  ReportSnapshot,
+  OrderFilterState,
+} from '@/types/manifest';
+import { filterAndSortOrders, INITIAL_FILTER_STATE } from '@/lib/filterOrders';
+
+const LOCAL_STORAGE_BATCH_KEY = 'order_manifest_active_batch';
 
 export default function OrderManifestApp() {
   // Manifest batch state
   const [orders, setOrders] = useState<ManifestOrder[]>([]);
-  const [activeFilter, setActiveFilter] = useState<ItemStatus | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState<OrderFilterState>(INITIAL_FILTER_STATE);
   const [reportStatusMessage, setReportStatusMessage] = useState('Stamp every item to generate the report.');
   const [savingReport, setSavingReport] = useState(false);
   const [currentReport, setCurrentReport] = useState<ReportSnapshot | null>(null);
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
+  const [isManualOrderOpen, setIsManualOrderOpen] = useState(false);
   const [savedReportsCount, setSavedReportsCount] = useState(0);
 
   const reportRef = useRef<HTMLDivElement>(null);
@@ -40,7 +50,20 @@ export default function OrderManifestApp() {
     }
   };
 
+  // Hydrate active manifest batch from localStorage
   useEffect(() => {
+    try {
+      const cached = localStorage.getItem(LOCAL_STORAGE_BATCH_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setOrders(parsed);
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to hydrate active batch from localStorage:', e);
+    }
+
     refreshArchiveCount();
 
     if (window.location.search.includes('sample=1')) {
@@ -56,6 +79,19 @@ export default function OrderManifestApp() {
         });
     }
   }, []);
+
+  // Sync active manifest batch to localStorage
+  useEffect(() => {
+    try {
+      if (orders.length > 0) {
+        localStorage.setItem(LOCAL_STORAGE_BATCH_KEY, JSON.stringify(orders));
+      } else {
+        localStorage.removeItem(LOCAL_STORAGE_BATCH_KEY);
+      }
+    } catch (e) {
+      console.warn('Failed to sync batch to localStorage:', e);
+    }
+  }, [orders]);
 
   // Compute all items across active orders
   const allItems = useMemo(() => {
@@ -155,13 +191,16 @@ export default function OrderManifestApp() {
     return conflictList;
   }, [allItems]);
 
-  // Handlers
+  // Handlers for importing Shopify orders
   const handleImportOrders = (incoming: ShopifyOrderSummary[]) => {
     const newManifestOrders: ManifestOrder[] = incoming.map((o) => ({
       id: o.name,
       shopifyOrderId: o.id,
+      source: 'shopify',
       customer: o.customer,
       customerEmail: o.customerEmail,
+      orderDate: o.createdAt,
+      createdAt: o.createdAt,
       fulfillmentStatus: o.fulfillmentStatus,
       items: o.items.map((it) => ({
         id: Math.random().toString(36).substring(2, 9),
@@ -181,9 +220,30 @@ export default function OrderManifestApp() {
       })),
     }));
 
-    setOrders((prev) => [...prev, ...newManifestOrders]);
+    setOrders((prev) => {
+      const existingIds = new Set(prev.map((ord) => ord.id.toLowerCase()));
+      const unique = newManifestOrders.filter((ord) => !existingIds.has(ord.id.toLowerCase()));
+      return [...prev, ...unique];
+    });
 
-    // Scroll to the first ticket after import
+    setTimeout(() => {
+      const firstTicket = document.querySelector('.ticket');
+      if (firstTicket) {
+        firstTicket.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+  };
+
+  // Handler for importing manually created order
+  const handleImportManualOrder = (createdOrder: ManifestOrder) => {
+    setOrders((prev) => {
+      // Prevent duplicates
+      if (prev.some((o) => o.id.toLowerCase() === createdOrder.id.toLowerCase())) {
+        return prev;
+      }
+      return [createdOrder, ...prev];
+    });
+
     setTimeout(() => {
       const firstTicket = document.querySelector('.ticket');
       if (firstTicket) {
@@ -318,6 +378,7 @@ export default function OrderManifestApp() {
       // 4. On confirmed save, display report, clear active board, update archive
       setCurrentReport(snapshot);
       setOrders([]);
+      localStorage.removeItem(LOCAL_STORAGE_BATCH_KEY);
       refreshArchiveCount();
 
       setTimeout(() => {
@@ -372,32 +433,39 @@ export default function OrderManifestApp() {
     }
   };
 
-  // Filter orders by search query
-  const query = searchQuery.trim().toLowerCase();
-  const visibleOrders = orders.filter((o) => {
-    if (!query) return true;
-    return o.customer.toLowerCase().includes(query) || o.id.toLowerCase().includes(query);
-  });
+  // Filter and sort orders using multi-criteria pipeline
+  const visibleOrders = useMemo(() => {
+    return filterAndSortOrders(orders, filters);
+  }, [orders, filters]);
 
   return (
     <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 pb-28">
       {/* Top Header */}
       <TopBar
         counts={counts}
-        activeFilter={activeFilter}
-        onToggleFilter={(status) => setActiveFilter((prev) => (prev === status ? null : status))}
+        activeFilter={filters.status !== 'all' ? (filters.status as ItemStatus) : null}
+        onToggleFilter={(status) => {
+          setFilters((prev) => ({
+            ...prev,
+            status: prev.status === status ? 'all' : status,
+          }));
+        }}
+        onOpenManualOrder={() => setIsManualOrderOpen(true)}
       />
 
       {/* Info Banner */}
-      <div className="text-xs text-stone-300 bg-ink-night-2 border border-dashed border-ink-rule rounded-md p-3 mb-6 leading-relaxed">
-        <b className="text-cream">Production Ops Manifest:</b> Connected directly to Essentials EG Shopify Admin GraphQL API.
-        Pasting or browsing orders retrieves real items, vendors, variants, and current inventory levels.
+      <div className="text-xs text-stone-300 bg-ink-night-2 border border-dashed border-ink-rule rounded-md p-3 mb-6 leading-relaxed flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <b className="text-cream">Production Ops Manifest:</b> Connected directly to Essentials EG Shopify Admin API & internal PostgreSQL database.
+          Create manual orders or import Shopify batches to match inventory in real-time.
+        </div>
       </div>
 
       {/* Import Section */}
       <ImportSection
         onImportOrders={handleImportOrders}
         existingOrderIds={orders.map((o) => o.id)}
+        onOpenManualOrder={() => setIsManualOrderOpen(true)}
       />
 
       {/* Stock Conflict Warning Banner */}
@@ -406,26 +474,48 @@ export default function OrderManifestApp() {
       {/* Board & Toolbar */}
       <div ref={boardRef}>
         {orders.length > 0 && (
-          <BoardToolbar
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
+          <AdvancedFilterBar
+            filters={filters}
+            onFilterChange={setFilters}
+            onResetFilters={() => setFilters(INITIAL_FILTER_STATE)}
+            totalOrders={orders.length}
+            filteredOrdersCount={visibleOrders.length}
             onMarkAllRemainingReady={handleMarkAllRemainingReady}
           />
         )}
 
         {orders.length === 0 ? (
           <div className="text-center py-14 px-4 text-stone-500 text-xs border border-dashed border-ink-rule rounded-md mb-8">
-            No orders imported yet &mdash; browse Shopify store or paste order numbers above to populate the manifest board.
+            No orders in active manifest &mdash; click{' '}
+            <button
+              type="button"
+              onClick={() => setIsManualOrderOpen(true)}
+              className="text-purple-400 font-semibold underline hover:text-purple-300 cursor-pointer"
+            >
+              Create Manual Order
+            </button>{' '}
+            or browse/paste Shopify orders above to populate the board.
           </div>
         ) : visibleOrders.length === 0 ? (
-          <div className="text-center py-10 px-4 text-stone-500 text-xs border border-dashed border-ink-rule rounded-md mb-8">
-            No orders match the current search or filter.
+          <div className="text-center py-12 px-4 border border-dashed border-ink-rule rounded-md mb-8 bg-ink-night-2">
+            <p className="text-sm font-semibold text-cream mb-1">No orders match your filter criteria</p>
+            <p className="text-xs text-stone-400 mb-4">
+              Try adjusting your search terms, date range, or status filters.
+            </p>
+            <button
+              type="button"
+              onClick={() => setFilters(INITIAL_FILTER_STATE)}
+              className="font-mono text-xs px-3.5 py-1.5 rounded bg-purple-600 hover:bg-purple-500 text-white transition cursor-pointer font-semibold shadow-sm"
+            >
+              Clear All Filters
+            </button>
           </div>
         ) : (
           <div className="space-y-6">
             {visibleOrders.map((order) => {
-              const filteredItems = activeFilter
-                ? order.items.filter((i) => i.status === activeFilter)
+              const activeFilterStatus = filters.status !== 'all' ? (filters.status as ItemStatus) : null;
+              const filteredItems = activeFilterStatus
+                ? order.items.filter((i) => i.status === activeFilterStatus)
                 : order.items;
 
               return (
@@ -434,7 +524,7 @@ export default function OrderManifestApp() {
                   order={order}
                   filteredItems={filteredItems}
                   totalItemCount={order.items.length}
-                  activeFilter={activeFilter}
+                  activeFilter={activeFilterStatus}
                   onSetStatus={handleSetStatus}
                   onCycleStatus={handleCycleStatus}
                   onSetNote={handleSetNote}
@@ -480,6 +570,13 @@ export default function OrderManifestApp() {
             }
           }, 100);
         }}
+      />
+
+      {/* Manual Order Creation Modal */}
+      <ManualOrderModal
+        isOpen={isManualOrderOpen}
+        onClose={() => setIsManualOrderOpen(false)}
+        onOrderCreated={handleImportManualOrder}
       />
     </div>
   );

@@ -20,17 +20,22 @@ model Batch {
 }
 
 model Order {
-  id               String      @id @default(cuid())
-  shopifyOrderId   String?
-  shopifyOrderName String
-  customer         String
-  customerEmail    String?
-  batchId          String
-  batch            Batch       @relation(fields: [batchId], references: [id], onDelete: Cascade)
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  id                String      @id @default(cuid())
+  shopifyOrderId    String?
+  shopifyOrderName  String
+  source            String      @default("shopify") // "shopify" | "manual"
+  customer          String
+  customerPhone     String?
+  customerEmail     String?
+  orderDate         DateTime?   @default(now())
+  notes             String?
+  fulfillmentStatus String?     @default("UNFULFILLED")
+  batchId           String
+  batch             Batch       @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
 
-  items            OrderItem[]
+  items             OrderItem[]
 
   @@index([batchId])
   @@index([shopifyOrderName])
@@ -47,6 +52,7 @@ model OrderItem {
   name              String
   brand             String
   size              String
+  color             String?
   sku               String
   quantity          Int      @default(1)
   inventoryQuantity Int?
@@ -71,4 +77,46 @@ model Report {
 
   @@index([createdAt])
   @@map("reports")
+}
+
+model ManualOrder {
+  id                String            @id @default(cuid())
+  orderNumber       String            @unique
+  customer          String
+  customerPhone     String?
+  customerEmail     String?
+  orderDate         DateTime          @default(now())
+  notes             String?
+  source            String            @default("manual")
+  fulfillmentStatus String            @default("UNFULFILLED")
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  items             ManualOrderItem[]
+
+  @@index([orderNumber])
+  @@index([customer])
+  @@map("manual_orders")
+}
+
+model ManualOrderItem {
+  id                String       @id @default(cuid())
+  manualOrderId     String
+  manualOrder       ManualOrder  @relation(fields: [manualOrderId], references: [id], onDelete: Cascade)
+  productId         String?
+  variantId         String?
+  name              String
+  brand             String       @default("Essentials EG")
+  size              String       @default("—")
+  color             String?
+  sku               String       @default("")
+  quantity          Int          @default(1)
+  inventoryQuantity Int?
+  status            String       @default("pending")
+  note              String       @default("")
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@index([manualOrderId])
+  @@map("manual_order_items")
 }

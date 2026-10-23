@@ -1,3 +1,20 @@
+export interface ShopifyProductVariantSummary {
+  id: string;
+  title: string;
+  sku: string;
+  inventoryQuantity: number | null;
+  size?: string;
+  color?: string;
+}
+
+export interface ShopifyProductSummary {
+  id: string;
+  title: string;
+  vendor: string;
+  productType?: string;
+  variants: ShopifyProductVariantSummary[];
+}
+
 export interface ShopifyLineItem {
   id: string;
   name: string;
@@ -50,7 +67,7 @@ const BRAND_COLORS: Record<string, string> = {
   Corteiz: '#2f6b4f',
 };
 
-function getBrandColor(brand: string): string {
+export function getBrandColor(brand: string): string {
   if (BRAND_COLORS[brand]) return BRAND_COLORS[brand];
   // Deterministic color generator for arbitrary brands
   let hash = 0;
@@ -546,4 +563,185 @@ export async function lookupOrdersByNumbers(rawNumbers: string[]): Promise<{
     orders: fetchedOrders,
     notFound,
   };
+}
+
+/**
+ * Search Shopify store product catalog
+ */
+export async function searchShopifyProducts(queryText?: string, limit: number = 30): Promise<ShopifyProductSummary[]> {
+  const config = getShopifyConfig();
+
+  const fallbackCatalog: ShopifyProductSummary[] = [
+    {
+      id: 'gid://shopify/Product/demo-1',
+      title: 'Shark Full Zip Hoodie',
+      vendor: 'BAPE',
+      productType: 'Hoodies',
+      variants: [
+        { id: 'gid://shopify/ProductVariant/demo-1-s', title: 'S / Black', sku: 'BAP-3186', inventoryQuantity: 2, size: 'S', color: 'Black' },
+        { id: 'gid://shopify/ProductVariant/demo-1-m', title: 'M / Black', sku: 'BAP-3187', inventoryQuantity: 1, size: 'M', color: 'Black' },
+        { id: 'gid://shopify/ProductVariant/demo-1-l', title: 'L / Black', sku: 'BAP-3188', inventoryQuantity: 0, size: 'L', color: 'Black' },
+        { id: 'gid://shopify/ProductVariant/demo-1-xl', title: 'XL / Black', sku: 'BAP-3189', inventoryQuantity: 3, size: 'XL', color: 'Black' },
+      ],
+    },
+    {
+      id: 'gid://shopify/Product/demo-2',
+      title: 'Arrows Logo Tee',
+      vendor: 'Off-White',
+      productType: 'T-Shirts',
+      variants: [
+        { id: 'gid://shopify/ProductVariant/demo-2-s', title: 'S / White', sku: 'OFF-3887', inventoryQuantity: 2, size: 'S', color: 'White' },
+        { id: 'gid://shopify/ProductVariant/demo-2-m', title: 'M / White', sku: 'OFF-3888', inventoryQuantity: 3, size: 'M', color: 'White' },
+        { id: 'gid://shopify/ProductVariant/demo-2-l', title: 'L / White', sku: 'OFF-3889', inventoryQuantity: 4, size: 'L', color: 'White' },
+      ],
+    },
+    {
+      id: 'gid://shopify/Product/demo-3',
+      title: 'Club Cap',
+      vendor: 'Nike',
+      productType: 'Accessories',
+      variants: [
+        { id: 'gid://shopify/ProductVariant/demo-3-os', title: 'One Size / Black', sku: 'NIK-5126', inventoryQuantity: 12, size: 'One Size', color: 'Black' },
+      ],
+    },
+    {
+      id: 'gid://shopify/Product/demo-4',
+      title: 'Oxford Shirt',
+      vendor: 'Polo Ralph Lauren',
+      productType: 'Shirts',
+      variants: [
+        { id: 'gid://shopify/ProductVariant/demo-4-s', title: 'S / Blue', sku: 'POL-9013', inventoryQuantity: 2, size: 'S', color: 'Blue' },
+        { id: 'gid://shopify/ProductVariant/demo-4-m', title: 'M / Blue', sku: 'POL-9014', inventoryQuantity: 5, size: 'M', color: 'Blue' },
+        { id: 'gid://shopify/ProductVariant/demo-4-l', title: 'L / Blue', sku: 'POL-9015', inventoryQuantity: 1, size: 'L', color: 'Blue' },
+      ],
+    },
+    {
+      id: 'gid://shopify/Product/demo-5',
+      title: 'Heart Logo Tee',
+      vendor: 'Comme des Garçons Play',
+      productType: 'T-Shirts',
+      variants: [
+        { id: 'gid://shopify/ProductVariant/demo-5-m', title: 'M / White', sku: 'CDG-4102', inventoryQuantity: 0, size: 'M', color: 'White' },
+        { id: 'gid://shopify/ProductVariant/demo-5-l', title: 'L / White', sku: 'CDG-4103', inventoryQuantity: 2, size: 'L', color: 'White' },
+      ],
+    },
+    {
+      id: 'gid://shopify/Product/demo-6',
+      title: 'Crewneck Sweater',
+      vendor: 'Ami',
+      productType: 'Knitwear',
+      variants: [
+        { id: 'gid://shopify/ProductVariant/demo-6-s', title: 'S / Heather Grey', sku: 'AMI-8740', inventoryQuantity: 1, size: 'S', color: 'Grey' },
+        { id: 'gid://shopify/ProductVariant/demo-6-l', title: 'L / Heather Grey', sku: 'AMI-8741', inventoryQuantity: 3, size: 'L', color: 'Grey' },
+      ],
+    },
+  ];
+
+  if (!config.isConfigured) {
+    if (!queryText?.trim()) return fallbackCatalog;
+    const q = queryText.toLowerCase().trim();
+    return fallbackCatalog.filter(
+      p => p.title.toLowerCase().includes(q) || p.vendor.toLowerCase().includes(q) || p.variants.some(v => v.sku.toLowerCase().includes(q))
+    );
+  }
+
+  const cleanQuery = queryText?.trim() ? `title:*${queryText.trim()}* OR vendor:*${queryText.trim()}*` : undefined;
+
+  const graphqlQuery = `
+    query SearchCatalog($first: Int!, $query: String) {
+      products(first: $first, query: $query) {
+        edges {
+          node {
+            id
+            title
+            vendor
+            productType
+            variants(first: 30) {
+              edges {
+                node {
+                  id
+                  title
+                  sku
+                  inventoryQuantity
+                  selectedOptions {
+                    name
+                    value
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  try {
+    interface CatalogResponse {
+      products: {
+        edges: Array<{
+          node: {
+            id: string;
+            title: string;
+            vendor: string;
+            productType: string;
+            variants: {
+              edges: Array<{
+                node: {
+                  id: string;
+                  title: string;
+                  sku: string;
+                  inventoryQuantity: number | null;
+                  selectedOptions: Array<{ name: string; value: string }>;
+                };
+              }>;
+            };
+          };
+        }>;
+      };
+    }
+
+    const data = await shopifyGraphQL<CatalogResponse>(graphqlQuery, {
+      first: Math.min(limit, 50),
+      query: cleanQuery,
+    });
+
+    return data.products.edges.map(e => {
+      const p = e.node;
+      const variants: ShopifyProductVariantSummary[] = p.variants.edges.map(ve => {
+        const v = ve.node;
+        let size: string | undefined;
+        let color: string | undefined;
+        v.selectedOptions?.forEach(opt => {
+          const optName = opt.name.toLowerCase();
+          if (optName.includes('size')) size = opt.value;
+          else if (optName.includes('color') || optName.includes('colour')) color = opt.value;
+        });
+
+        return {
+          id: v.id,
+          title: v.title,
+          sku: v.sku || '',
+          inventoryQuantity: v.inventoryQuantity ?? null,
+          size: size || (v.title !== 'Default Title' ? v.title : '—'),
+          color,
+        };
+      });
+
+      return {
+        id: p.id,
+        title: p.title,
+        vendor: p.vendor || 'Essentials EG',
+        productType: p.productType || '',
+        variants,
+      };
+    });
+  } catch (err) {
+    console.warn('Shopify product search failed, falling back to mock catalog:', err);
+    if (!queryText?.trim()) return fallbackCatalog;
+    const q = queryText.toLowerCase().trim();
+    return fallbackCatalog.filter(
+      p => p.title.toLowerCase().includes(q) || p.vendor.toLowerCase().includes(q) || p.variants.some(v => v.sku.toLowerCase().includes(q))
+    );
+  }
 }

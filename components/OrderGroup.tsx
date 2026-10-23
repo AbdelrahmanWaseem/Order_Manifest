@@ -36,6 +36,11 @@ export default function OrderGroup({
         <div className="flex items-baseline gap-2.5 flex-wrap">
           <h3 className="text-base font-bold text-cream">{order.customer}</h3>
           <span className="font-mono text-xs text-stamp-pending">{order.id}</span>
+          {(order.source === 'manual' || order.id.startsWith('MAN-')) && (
+            <span className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded-[3px] bg-purple-950/70 text-purple-300 border border-purple-800/60">
+              Manual Order
+            </span>
+          )}
           {order.fulfillmentStatus && (
             <span
               className={`font-mono text-[10px] font-semibold px-2 py-0.5 rounded-[3px] border ${
@@ -51,6 +56,16 @@ export default function OrderGroup({
                 : order.fulfillmentStatus.toUpperCase().includes('PARTIAL')
                 ? 'Partially Fulfilled'
                 : 'Unfulfilled'}
+            </span>
+          )}
+          {order.customerPhone && (
+            <span className="font-mono text-[11px] text-stone-400">
+              📞 {order.customerPhone}
+            </span>
+          )}
+          {order.orderDate && (
+            <span className="font-mono text-[11px] text-stone-500">
+              📅 {new Date(order.orderDate).toLocaleDateString()}
             </span>
           )}
           <span className="font-mono text-[11.5px] text-stone-500">
@@ -83,6 +98,13 @@ export default function OrderGroup({
           </button>
         </div>
       </div>
+
+      {order.notes && (
+        <div className="text-[11px] text-stone-300 bg-ink-night-2/70 border border-ink-rule/80 rounded px-3 py-1.5 mb-3 flex items-start gap-2">
+          <span className="font-mono text-[10px] uppercase font-semibold text-stone-500 shrink-0">Note:</span>
+          <span className="italic">{order.notes}</span>
+        </div>
+      )}
 
       {/* Tickets Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">

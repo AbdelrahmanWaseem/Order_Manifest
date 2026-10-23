@@ -2,18 +2,20 @@
 
 import React, { useState, useEffect } from 'react';
 import { ItemStatus } from '@/types/manifest';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Plus } from 'lucide-react';
 
 interface TopBarProps {
   counts: Record<ItemStatus, number>;
   activeFilter: ItemStatus | null;
   onToggleFilter: (status: ItemStatus) => void;
+  onOpenManualOrder?: () => void;
 }
 
 export default function TopBar({
   counts,
   activeFilter,
   onToggleFilter,
+  onOpenManualOrder,
 }: TopBarProps) {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [mounted, setMounted] = useState(false);
@@ -91,6 +93,18 @@ export default function TopBar({
             );
           })}
         </div>
+
+        {onOpenManualOrder && (
+          <button
+            type="button"
+            onClick={onOpenManualOrder}
+            className="font-mono text-xs font-bold px-3 py-1.5 rounded-[3px] bg-purple-600 hover:bg-purple-500 text-white shadow-sm transition flex items-center gap-1.5 cursor-pointer ml-1"
+            title="Create a manual internal order"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Manual Order</span>
+          </button>
+        )}
 
         <div className="h-6 w-px bg-ink-rule mx-1 hidden sm:block" />
 
