@@ -48,6 +48,12 @@ body {
 }
 
 /* Calm, eye-friendly text contrast */
+html.dark .text-stone-100 {
+  color: #f1f2f6 !important;
+}
+html.dark .text-stone-200 {
+  color: #e2e4ec !important;
+}
 html.dark .text-stone-300 {
   color: #c9ccd6 !important;
 }
@@ -58,14 +64,20 @@ html.dark .text-stone-500 {
   color: #6b7080 !important;
 }
 
+html.light .text-stone-100 {
+  color: #0f172a !important;
+}
+html.light .text-stone-200 {
+  color: #1e293b !important;
+}
 html.light .text-stone-300 {
   color: #334155 !important;
 }
 html.light .text-stone-400 {
-  color: #64748b !important;
+  color: #475569 !important;
 }
 html.light .text-stone-500 {
-  color: #94a3b8 !important;
+  color: #64748b !important;
 }
 html.light .bg-stone-800 {
   background-color: #f1f3f6 !important;

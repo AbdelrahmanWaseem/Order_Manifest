@@ -487,12 +487,12 @@ export default function OrderManifestApp() {
         )}
 
         {orders.length === 0 ? (
-          <div className="text-center py-14 px-4 text-stone-500 text-xs border border-dashed border-ink-rule rounded-md mb-8">
+          <div className="text-center py-14 px-4 text-stone-600 dark:text-stone-400 text-xs sm:text-sm font-medium border border-dashed border-ink-rule rounded-xl mb-8 bg-ink-night-2/40">
             No orders in active manifest &mdash; click{' '}
             <button
               type="button"
               onClick={() => setIsManualOrderOpen(true)}
-              className="text-purple-400 font-semibold underline hover:text-purple-300 cursor-pointer"
+              className="text-purple-600 dark:text-purple-400 font-bold underline hover:opacity-80 cursor-pointer"
             >
               Create Manual Order
             </button>{' '}
