@@ -3,37 +3,37 @@
 @tailwind utilities;
 
 :root, html.dark {
-  --ink-night: #121316;
-  --ink-night-2: #18191f;
-  --ink-night-3: #22242c;
-  --ink-rule: #2a2c36;
-  --paper: #18191f;
-  --paper-2: #22242c;
-  --paper-rule: #2a2c36;
-  --ink-dark: #f1f2f6;
-  --ink-soft: #9499a8;
-  --stamp-ready: #34d399;
-  --stamp-incoming: #60a5fa;
-  --stamp-missing: #f87171;
-  --stamp-pending: #fbbf24;
-  --cream: #ededf2;
+  --ink-night: #111317;
+  --ink-night-2: #181b22;
+  --ink-night-3: #212530;
+  --ink-rule: #292e3b;
+  --paper: #181b22;
+  --paper-2: #212530;
+  --paper-rule: #292e3b;
+  --ink-dark: #e6e8f0;
+  --ink-soft: #8f96a6;
+  --stamp-ready: #10b981;
+  --stamp-incoming: #3b82f6;
+  --stamp-missing: #ef4444;
+  --stamp-pending: #f59e0b;
+  --cream: #e6e8f0;
 }
 
 html.light {
-  --ink-night: #f6f7fa;
+  --ink-night: #f8fafc;
   --ink-night-2: #ffffff;
-  --ink-night-3: #f0f2f5;
-  --ink-rule: #e2e4ea;
+  --ink-night-3: #f1f5f9;
+  --ink-rule: #e2e8f0;
   --paper: #ffffff;
   --paper-2: #f8fafc;
-  --paper-rule: #e2e4ea;
-  --ink-dark: #18191f;
+  --paper-rule: #e2e8f0;
+  --ink-dark: #0f172a;
   --ink-soft: #64748b;
   --stamp-ready: #059669;
   --stamp-incoming: #2563eb;
   --stamp-missing: #dc2626;
   --stamp-pending: #d97706;
-  --cream: #18191f;
+  --cream: #0f172a;
 }
 
 body {
@@ -145,10 +145,28 @@ html.light .ticket:hover {
 /* Print Styles */
 @media print {
   body {
-    background: #fff !important;
-    color: #18191f !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
   }
   .no-print {
     display: none !important;
+  }
+  .report-doc {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .report-doc * {
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+  }
+  .order-card {
+    border: 1px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 }
