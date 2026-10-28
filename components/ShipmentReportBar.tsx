@@ -11,6 +11,8 @@ interface ShipmentReportBarProps {
   savingReport: boolean;
   totalItems?: number;
   stampedItems?: number;
+  importedOrdersCount?: number;
+  missingItemsCount?: number;
 }
 
 export default function ShipmentReportBar({
@@ -21,6 +23,8 @@ export default function ShipmentReportBar({
   savingReport,
   totalItems = 0,
   stampedItems = 0,
+  importedOrdersCount = 0,
+  missingItemsCount = 0,
 }: ShipmentReportBarProps) {
   const isAllStamped = totalItems > 0 && stampedItems >= totalItems;
   const progressPercent = totalItems > 0 ? Math.min(100, Math.round((stampedItems / totalItems) * 100)) : 0;
@@ -28,31 +32,18 @@ export default function ShipmentReportBar({
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#FFFFFF] dark:bg-[#1E293B] border-t border-[#E3E6EB] dark:border-[#334155] py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] no-print">
       <div className="max-w-[1100px] mx-auto px-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        {/* Left: Stamped count and thin progress bar */}
-        <div className="flex-1 min-w-[240px]">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-text tabular-nums whitespace-nowrap">
-              {stampedItems} / {totalItems} items stamped
-            </span>
-            <div className="flex-1 max-w-[200px] h-1.5 bg-bg border border-border rounded-full overflow-hidden">
-              <div
-                className={`h-full transition-all duration-200 rounded-full ${
-                  isAllStamped ? 'bg-emerald-500' : 'bg-accent'
-                }`}
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-            <span className="text-xs text-text-muted tabular-nums font-medium">
-              {progressPercent}%
-            </span>
+        {/* Left: Orders imported & Missing items */}
+        <div className="flex items-center gap-4 shrink-0">
+          <div className="flex items-center gap-1.5">
+            <span className="text-lg font-bold text-text tabular-nums">{importedOrdersCount}</span>
+            <span className="text-xs text-text-muted leading-tight">orders<br/>imported</span>
           </div>
-
-          <div className="text-xs text-text-muted mt-1">
-            {totalItems === 0
-              ? 'No active orders in manifest'
-              : !isAllStamped
-              ? `${totalItems - stampedItems} item(s) remaining — stamp all items before generating report`
-              : 'All items stamped — ready to generate shipment report'}
+          <span className="h-6 w-px bg-border" />
+          <div className="flex items-center gap-1.5">
+            <span className={`text-lg font-bold tabular-nums ${missingItemsCount > 0 ? 'text-red-500' : 'text-text'}`}>
+              {missingItemsCount}
+            </span>
+            <span className="text-xs text-text-muted leading-tight">missing<br/>items</span>
           </div>
         </div>
 

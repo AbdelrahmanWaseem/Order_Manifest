@@ -620,6 +620,8 @@ export default function OrderManifestApp() {
         savingReport={savingReport}
         totalItems={totalItemsCount}
         stampedItems={stampedItemsCount}
+        importedOrdersCount={orders.length}
+        missingItemsCount={counts.missing}
       />
 
       {/* Generated Report View */}
