@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ManifestOrder } from '@/types/manifest';
 import { ShopifyProductSummary, ShopifyProductVariantSummary } from '@/lib/shopify';
-import { Plus, Trash2, Search, Loader2, AlertCircle, CheckCircle2, X } from 'lucide-react';
+import { Plus, Trash2, Search, Loader2, CheckCircle2, X } from 'lucide-react';
 
 interface ManualOrderItemForm {
   id: string;
@@ -58,22 +58,19 @@ export default function ManualOrderModal({
   const [error, setError] = useState<string | null>(null);
 
   // Search catalog state per item
-  const [activeCatalogItemIdx, setActiveCatalogItemIdx] = useState<number | null>(null);
   const [catalogQuery, setCatalogQuery] = useState('');
   const [catalogResults, setCatalogResults] = useState<ShopifyProductSummary[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(false);
+  const [activeCatalogItemIdx, setActiveCatalogItemIdx] = useState<number | null>(null);
 
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Reset form when modal opens
   useEffect(() => {
-    if (isOpen) {
-      setError(null);
+    if (!isOpen) {
       setCustomer('');
       setCustomerPhone('');
       setCustomerEmail('');
       setOrderNumber('');
-      setOrderDate(new Date().toISOString().split('T')[0]);
       setNotes('');
       setItems([
         {
@@ -87,45 +84,92 @@ export default function ManualOrderModal({
           inventoryQuantity: null,
         },
       ]);
+      setError(null);
+      setActiveCatalogItemIdx(null);
     }
   }, [isOpen]);
 
-  // Handle searching products in catalog
-  useEffect(() => {
-    if (activeCatalogItemIdx === null) {
+  const handleCatalogSearch = (query: string) => {
+    setCatalogQuery(query);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+
+    if (!query.trim()) {
       setCatalogResults([]);
       return;
     }
 
-    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-
     searchTimeoutRef.current = setTimeout(async () => {
       setCatalogLoading(true);
       try {
-        const res = await fetch(`/api/shopify/products?query=${encodeURIComponent(catalogQuery.trim())}&limit=20`);
+        const res = await fetch(`/api/shopify/products?query=${encodeURIComponent(query)}`);
         const data = await res.json();
-        if (res.ok && data.products) {
+        if (res.ok && Array.isArray(data.products)) {
           setCatalogResults(data.products);
+        } else {
+          setCatalogResults([]);
         }
-      } catch (e) {
-        console.error('Failed to search catalog:', e);
+      } catch {
+        setCatalogResults([]);
       } finally {
         setCatalogLoading(false);
       }
-    }, 250);
+    }, 300);
+  };
 
-    return () => {
-      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-    };
-  }, [catalogQuery, activeCatalogItemIdx]);
+  const handleSelectProduct = (idx: number, prod: ShopifyProductSummary) => {
+    setItems((prev) =>
+      prev.map((item, i) => {
+        if (i !== idx) return item;
+        const firstVariant = prod.variants[0];
+        return {
+          ...item,
+          name: prod.title,
+          brand: prod.vendor || 'Essentials EG',
+          sku: firstVariant?.sku || item.sku,
+          size: firstVariant?.size || item.size,
+          color: firstVariant?.color || item.color,
+          inventoryQuantity: firstVariant ? firstVariant.inventoryQuantity : null,
+          productId: prod.id,
+          variantId: firstVariant?.id,
+        };
+      })
+    );
+    setActiveCatalogItemIdx(null);
+    setCatalogQuery('');
+    setCatalogResults([]);
+  };
 
-  if (!isOpen) return null;
+  const handleSelectVariant = (
+    idx: number,
+    prod: ShopifyProductSummary,
+    variant: ShopifyProductVariantSummary
+  ) => {
+    setItems((prev) =>
+      prev.map((item, i) => {
+        if (i !== idx) return item;
+        return {
+          ...item,
+          name: prod.title,
+          brand: prod.vendor || 'Essentials EG',
+          sku: variant.sku || item.sku,
+          size: variant.size || item.size,
+          color: variant.color || item.color,
+          inventoryQuantity: variant.inventoryQuantity,
+          productId: prod.id,
+          variantId: variant.id,
+        };
+      })
+    );
+    setActiveCatalogItemIdx(null);
+    setCatalogQuery('');
+    setCatalogResults([]);
+  };
 
   const handleAddItem = () => {
     setItems((prev) => [
       ...prev,
       {
-        id: `item-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
+        id: `item-${Date.now()}-${prev.length + 1}`,
         name: '',
         brand: 'Essentials EG',
         size: 'M',
@@ -137,51 +181,21 @@ export default function ManualOrderModal({
     ]);
   };
 
-  const handleRemoveItem = (index: number) => {
+  const handleRemoveItem = (idx: number) => {
     if (items.length <= 1) return;
-    setItems((prev) => prev.filter((_, i) => i !== index));
-    if (activeCatalogItemIdx === index) {
-      setActiveCatalogItemIdx(null);
-    }
+    setItems((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  const handleItemChange = (index: number, field: keyof ManualOrderItemForm, value: any) => {
-    setItems((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], [field]: value };
-      return next;
-    });
-  };
-
-  const handleSelectVariant = (
-    itemIndex: number,
-    product: ShopifyProductSummary,
-    variant: ShopifyProductVariantSummary
-  ) => {
-    setItems((prev) => {
-      const next = [...prev];
-      next[itemIndex] = {
-        ...next[itemIndex],
-        name: product.title,
-        brand: product.vendor || 'Essentials EG',
-        size: variant.size || variant.title || '—',
-        color: variant.color || next[itemIndex].color || '',
-        sku: variant.sku || '',
-        inventoryQuantity: variant.inventoryQuantity,
-        productId: product.id,
-        variantId: variant.id,
-      };
-      return next;
-    });
-    setActiveCatalogItemIdx(null);
-    setCatalogQuery('');
+  const handleItemChange = (idx: number, field: keyof ManualOrderItemForm, val: any) => {
+    setItems((prev) =>
+      prev.map((item, i) => (i === idx ? { ...item, [field]: val } : item))
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    // Validation
     if (!customer.trim()) {
       setError('Customer name is required.');
       return;
@@ -199,30 +213,30 @@ export default function ManualOrderModal({
     }
 
     setSaving(true);
-
     try {
+      const payload = {
+        customer: customer.trim(),
+        customerPhone: customerPhone.trim() || undefined,
+        customerEmail: customerEmail.trim() || undefined,
+        orderNumber: orderNumber.trim() || undefined,
+        orderDate: orderDate || undefined,
+        notes: notes.trim() || undefined,
+        items: items.map((it) => ({
+          name: it.name.trim(),
+          brand: it.brand.trim() || 'Essentials EG',
+          size: it.size.trim() || 'One Size',
+          color: it.color.trim() || undefined,
+          sku: it.sku.trim() || undefined,
+          quantity: Number(it.quantity) || 1,
+          productId: it.productId,
+          variantId: it.variantId,
+        })),
+      };
+
       const res = await fetch('/api/manual-orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customer: customer.trim(),
-          customerPhone: customerPhone.trim() || undefined,
-          customerEmail: customerEmail.trim() || undefined,
-          orderNumber: orderNumber.trim() || undefined,
-          orderDate,
-          notes: notes.trim() || undefined,
-          items: items.map((it) => ({
-            name: it.name.trim(),
-            brand: it.brand.trim() || 'Essentials EG',
-            size: it.size.trim() || '—',
-            color: it.color.trim() || undefined,
-            sku: it.sku.trim() || '',
-            quantity: Number(it.quantity) || 1,
-            inventoryQuantity: it.inventoryQuantity,
-            productId: it.productId,
-            variantId: it.variantId,
-          })),
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -230,7 +244,6 @@ export default function ManualOrderModal({
         throw new Error(data.error || 'Failed to create manual order.');
       }
 
-      // Order created successfully
       onOrderCreated(data.order);
       onClose();
     } catch (err: any) {
@@ -240,131 +253,131 @@ export default function ManualOrderModal({
     }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-3 sm:p-4"
+    >
       <div
-        className="bg-ink-night-2 border border-ink-rule rounded-lg shadow-2xl w-full max-w-3xl my-6 flex flex-col max-h-[92vh] overflow-hidden"
         onClick={(e) => {
-          // Close catalog dropdown if clicking outside
-          if (activeCatalogItemIdx !== null && !(e.target as HTMLElement).closest('.catalog-dropdown-container')) {
+          e.stopPropagation();
+          if (activeCatalogItemIdx !== null && !(e.target as HTMLElement).closest('.catalog-dropdown-portal')) {
             setActiveCatalogItemIdx(null);
           }
         }}
+        className="bg-surface border border-border rounded-lg w-full max-w-2xl max-h-[90vh] flex flex-col shadow-lg overflow-hidden"
       >
         {/* Modal Header */}
-        <div className="px-5 py-4 border-b border-ink-rule flex items-center justify-between bg-ink-night">
+        <div className="px-5 py-4 border-b border-border flex items-center justify-between bg-surface">
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-base sm:text-lg font-bold text-cream tracking-tight">Create Manual Order</h2>
-              <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-ink-night-3 text-stone-300 border border-ink-rule">
-                Internal Ops
-              </span>
-            </div>
-            <p className="text-xs text-stone-400 mt-0.5">
-              Add offline, phone, or custom orders directly into the active manifest batch and database.
+            <h2 className="text-base font-semibold text-text">Create Manual Order</h2>
+            <p className="text-xs text-text-muted mt-0.5">
+              Add offline, phone, or custom orders directly into the active manifest batch
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-stone-400 hover:text-cream p-1.5 rounded-lg hover:bg-ink-night-3 transition cursor-pointer"
+            className="text-text-muted hover:text-text p-1.5 rounded-lg hover:bg-bg transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-5">
           {error && (
-            <div className="flex items-start gap-2.5 bg-rose-950/40 border border-rose-800/60 rounded-lg p-3 text-rose-200 text-xs font-medium">
-              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-              <span>{error}</span>
+            <div className="bg-[#FEE2E2] border border-[#FECACA] rounded-lg p-3 text-[#991B1B] dark:bg-[#7F1D1D] dark:border-[#991B1B] dark:text-[#FECACA] text-xs font-medium">
+              {error}
             </div>
           )}
 
           {/* Customer Details Section */}
-          <div className="bg-ink-night border border-ink-rule rounded-xl p-4 sm:p-5 shadow-sm">
-            <h3 className="font-mono text-xs uppercase tracking-wider text-stone-300 font-bold mb-3 flex items-center gap-2">
-              <span>1. Customer & Order Details</span>
+          <div className="bg-bg border border-border rounded-lg p-4 space-y-3.5">
+            <h3 className="text-xs font-semibold text-text-muted">
+              1. Customer & Order Details
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
-                  Customer Name <span className="text-rose-400">*</span>
+                <label className="block text-xs font-medium text-text mb-1">
+                  Customer Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Tarek Mansour"
                   value={customer}
+                  dir="auto"
                   onChange={(e) => setCustomer(e.target.value)}
-                  className="w-full bg-ink-night-2 border border-ink-rule rounded-lg px-3 py-1.5 text-xs sm:text-sm text-cream placeholder-stone-500 focus:outline-none focus:border-stone-400 transition"
+                  className="w-full h-10 bg-surface border border-border rounded-lg px-3 text-sm text-text placeholder-[#9CA3AF] focus:border-accent"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
-                  Customer Phone <span className="text-stone-500 font-normal">(optional)</span>
+                <label className="block text-xs font-medium text-text mb-1">
+                  Customer Phone <span className="text-text-muted font-normal">(optional)</span>
                 </label>
                 <input
                   type="tel"
                   placeholder="e.g. +20 100 123 4567"
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
-                  className="w-full bg-ink-night-2 border border-ink-rule rounded-lg px-3 py-1.5 text-xs sm:text-sm text-cream placeholder-stone-500 focus:outline-none focus:border-stone-400 transition"
+                  className="w-full h-10 bg-surface border border-border rounded-lg px-3 text-sm text-text placeholder-[#9CA3AF] focus:border-accent tabular-nums"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
-                  Order # / Reference <span className="text-stone-500 font-normal">(auto MAN-XXXX if blank)</span>
+                <label className="block text-xs font-medium text-text mb-1">
+                  Order # / Reference <span className="text-text-muted font-normal">(auto MAN-XXXX if blank)</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. MAN-1005 or #OFFLINE-22"
+                  placeholder="e.g. MAN-1005"
                   value={orderNumber}
                   onChange={(e) => setOrderNumber(e.target.value)}
-                  className="w-full bg-ink-night-2 border border-ink-rule rounded-lg px-3 py-1.5 text-xs sm:text-sm font-semibold text-cream placeholder-stone-500 focus:outline-none focus:border-stone-400 transition font-mono"
+                  className="w-full h-10 bg-surface border border-border rounded-lg px-3 text-sm text-text placeholder-[#9CA3AF] focus:border-accent tabular-nums"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
+                <label className="block text-xs font-medium text-text mb-1">
                   Order Date
                 </label>
                 <input
                   type="date"
                   value={orderDate}
                   onChange={(e) => setOrderDate(e.target.value)}
-                  className="w-full bg-ink-night-2 border border-ink-rule rounded-lg px-3 py-1.5 text-xs sm:text-sm text-cream focus:outline-none focus:border-stone-400 transition font-mono"
+                  className="w-full h-10 bg-surface border border-border rounded-lg px-3 text-sm text-text focus:border-accent tabular-nums"
                 />
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
-                  Order Notes <span className="text-stone-500 font-normal">(optional instructions or tracking info)</span>
+                <label className="block text-xs font-medium text-text mb-1">
+                  Order Notes <span className="text-text-muted font-normal">(optional instructions)</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Delivery requested for weekend, customer contacted via WhatsApp"
+                  placeholder="e.g. Customer contacted via WhatsApp, morning delivery requested"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full bg-ink-night-2 border border-ink-rule rounded-lg px-3 py-1.5 text-xs sm:text-sm text-cream placeholder-stone-500 focus:outline-none focus:border-stone-400 transition"
+                  className="w-full h-10 bg-surface border border-border rounded-lg px-3 text-sm text-text placeholder-[#9CA3AF] focus:border-accent"
                 />
               </div>
             </div>
           </div>
 
           {/* Line Items Section */}
-          <div className="bg-ink-night border border-ink-rule rounded-xl p-4 sm:p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-mono text-xs uppercase tracking-wider text-stone-300 font-bold flex items-center gap-2">
-                <span>2. Line Items ({items.length})</span>
+          <div className="bg-bg border border-border rounded-lg p-4 space-y-3.5">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-semibold text-text-muted">
+                2. Line Items ({items.length})
               </h3>
               <button
                 type="button"
                 onClick={handleAddItem}
-                className="font-mono text-xs font-semibold flex items-center gap-1.5 text-stone-200 hover:text-white px-2.5 py-1 rounded-md bg-ink-night-3 border border-ink-rule transition cursor-pointer"
+                className="h-8 px-2.5 bg-surface hover:bg-slate-50 dark:hover:bg-slate-800 text-text border border-border rounded-md text-xs font-medium transition cursor-pointer flex items-center gap-1 shadow-xs"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add Item</span>
@@ -375,81 +388,73 @@ export default function ManualOrderModal({
               {items.map((item, idx) => (
                 <div
                   key={item.id}
-                  className="bg-ink-night-2 border border-ink-rule rounded-lg p-3.5 relative space-y-3"
+                  className="bg-surface border border-border rounded-lg p-3.5 space-y-3 shadow-xs"
                 >
-                  <div className="flex items-center justify-between pb-2 border-b border-ink-rule/60">
-                    <span className="font-mono text-[11px] text-stone-400 font-medium">
+                  <div className="flex items-center justify-between pb-2 border-b border-border/60">
+                    <span className="text-xs font-semibold text-text">
                       Item #{idx + 1}
                     </span>
                     {items.length > 1 && (
                       <button
                         type="button"
                         onClick={() => handleRemoveItem(idx)}
-                        className="text-stone-500 hover:text-red-400 transition cursor-pointer p-1"
-                        title="Remove this item"
+                        className="text-text-muted hover:text-red-500 p-1 rounded transition cursor-pointer flex items-center gap-1 text-xs"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
+                        <span>Remove</span>
                       </button>
                     )}
                   </div>
 
-                  {/* Product Catalog Lookup / Custom Entry */}
-                  <div className="catalog-dropdown-container relative">
-                    <label className="block text-[11px] font-medium text-stone-300 mb-1">
-                      Product Name <span className="text-red-400">*</span>
-                      <span className="text-stone-500 font-normal ml-1.5">
-                        (Search store catalog or type directly)
-                      </span>
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        required
-                        placeholder="Search catalog e.g. 'Shark Hoodie' or enter custom..."
-                        value={item.name}
-                        onChange={(e) => {
-                          handleItemChange(idx, 'name', e.target.value);
-                          setCatalogQuery(e.target.value);
-                          setActiveCatalogItemIdx(idx);
-                        }}
-                        onFocus={() => {
-                          setCatalogQuery(item.name);
-                          setActiveCatalogItemIdx(idx);
-                        }}
-                        className="w-full bg-ink-night border border-ink-rule rounded px-3 py-1.5 pl-8 text-xs text-cream placeholder-stone-600 focus:outline-none focus:border-purple-500 transition"
-                      />
-                      <Search className="w-3.5 h-3.5 text-stone-500 absolute left-2.5 top-2.5" />
-                      {catalogLoading && activeCatalogItemIdx === idx && (
-                        <Loader2 className="w-3.5 h-3.5 text-purple-400 animate-spin absolute right-2.5 top-2.5" />
-                      )}
+                  {/* Search Product Catalog */}
+                  <div className="relative">
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <input
+                          type="text"
+                          placeholder="Search product from Shopify catalog (optional)…"
+                          value={activeCatalogItemIdx === idx ? catalogQuery : ''}
+                          onFocus={() => {
+                            setActiveCatalogItemIdx(idx);
+                            setCatalogQuery('');
+                            setCatalogResults([]);
+                          }}
+                          onChange={(e) => handleCatalogSearch(e.target.value)}
+                          className="w-full h-9 bg-bg border border-border rounded-md pl-8 pr-3 text-xs text-text placeholder-[#9CA3AF] focus:border-accent"
+                        />
+                        <Search className="w-3.5 h-3.5 text-text-muted absolute left-2.5 top-2.5 pointer-events-none" />
+                      </div>
                     </div>
 
-                    {/* Catalog Autocomplete Dropdown */}
-                    {activeCatalogItemIdx === idx && catalogResults.length > 0 && (
-                      <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-ink-night border border-ink-rule rounded-md shadow-2xl max-h-56 overflow-y-auto divide-y divide-ink-rule/60">
+                    {/* Catalog Results Dropdown */}
+                    {activeCatalogItemIdx === idx && (catalogResults.length > 0 || catalogLoading) && (
+                      <div className="catalog-dropdown-portal absolute left-0 right-0 top-10 bg-surface border border-border rounded-lg shadow-lg z-30 max-h-56 overflow-y-auto p-1.5 space-y-1">
+                        {catalogLoading && (
+                          <div className="p-3 text-center text-xs text-text-muted flex items-center justify-center gap-2">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
+                            <span>Searching catalog…</span>
+                          </div>
+                        )}
                         {catalogResults.map((prod) => (
-                          <div key={prod.id} className="p-2 hover:bg-stone-900/80 transition">
-                            <div className="flex items-center justify-between text-xs font-semibold text-cream mb-1">
-                              <span>{prod.title}</span>
-                              <span className="text-[10px] text-stone-400 font-normal font-mono">
-                                {prod.vendor}
-                              </span>
+                          <div
+                            key={prod.id}
+                            className="p-2 hover:bg-bg rounded-md transition text-xs border border-transparent hover:border-border cursor-pointer"
+                          >
+                            <div
+                              onClick={() => handleSelectProduct(idx, prod)}
+                              className="font-medium text-text hover:text-accent"
+                            >
+                              {prod.title}
                             </div>
-                            <div className="flex flex-wrap gap-1.5 mt-1">
+                            <div className="flex flex-wrap gap-1 mt-1">
                               {prod.variants.map((v) => (
                                 <button
                                   key={v.id}
                                   type="button"
                                   onClick={() => handleSelectVariant(idx, prod, v)}
-                                  className="font-mono text-[10px] px-2 py-0.5 rounded bg-ink-night-2 hover:bg-purple-900/60 border border-ink-rule hover:border-purple-500 text-stone-300 hover:text-white transition cursor-pointer flex items-center gap-1.5"
+                                  className="text-[11px] px-1.5 py-0.5 rounded bg-bg hover:bg-slate-100 dark:hover:bg-slate-800 border border-border text-text transition cursor-pointer"
                                 >
-                                  <span>{v.size || v.title}</span>
-                                  {v.color && <span className="text-stone-400">({v.color})</span>}
-                                  {v.inventoryQuantity !== null && v.inventoryQuantity > 0 && (
-                                    <span className="text-[9.5px] px-1 rounded text-stone-300 bg-ink-night-3 border border-ink-rule">
-                                      {v.inventoryQuantity} in stock
-                                    </span>
-                                  )}
+                                  {v.size || v.title}
                                 </button>
                               ))}
                             </div>
@@ -459,88 +464,73 @@ export default function ManualOrderModal({
                     )}
                   </div>
 
-                  {/* Variant Details: Brand, Size, Color, Qty, SKU */}
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-                    <div>
-                      <label className="block text-[10.5px] font-medium text-stone-400 mb-1">
-                        Brand
+                  {/* Manual Fields */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-medium text-text-muted mb-1">
+                        Product Name <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
+                        required
+                        placeholder="e.g. Vintage Heavyweight Hoodie"
+                        value={item.name}
+                        onChange={(e) => handleItemChange(idx, 'name', e.target.value)}
+                        className="w-full h-9 bg-bg border border-border rounded-md px-2.5 text-xs text-text placeholder-[#9CA3AF] focus:border-accent"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-text-muted mb-1">Brand</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Essentials EG"
                         value={item.brand}
                         onChange={(e) => handleItemChange(idx, 'brand', e.target.value)}
-                        placeholder="e.g. Essentials"
-                        className="w-full bg-ink-night border border-ink-rule rounded px-2.5 py-1 text-xs text-cream placeholder-stone-600 focus:outline-none focus:border-purple-500 transition"
+                        className="w-full h-9 bg-bg border border-border rounded-md px-2.5 text-xs text-text placeholder-[#9CA3AF] focus:border-accent"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[10.5px] font-medium text-stone-400 mb-1">
-                        Size / Variant
-                      </label>
-                      <input
-                        type="text"
-                        value={item.size}
-                        onChange={(e) => handleItemChange(idx, 'size', e.target.value)}
-                        placeholder="S, M, L..."
-                        className="w-full bg-ink-night border border-ink-rule rounded px-2.5 py-1 text-xs text-cream placeholder-stone-600 focus:outline-none focus:border-purple-500 transition font-mono"
-                        list={`sizes-list-${idx}`}
-                      />
-                      <datalist id={`sizes-list-${idx}`}>
+                      <label className="block text-xs font-medium text-text-muted mb-1">Size / Variant</label>
+                      <select
+                        value={COMMON_SIZES.includes(item.size) ? item.size : 'CUSTOM'}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val !== 'CUSTOM') handleItemChange(idx, 'size', val);
+                        }}
+                        className="w-full h-9 bg-bg border border-border rounded-md px-2 text-xs text-text focus:border-accent"
+                      >
                         {COMMON_SIZES.map((sz) => (
-                          <option key={sz} value={sz} />
+                          <option key={sz} value={sz}>
+                            {sz}
+                          </option>
                         ))}
-                      </datalist>
+                      </select>
                     </div>
 
                     <div>
-                      <label className="block text-[10.5px] font-medium text-stone-400 mb-1">
-                        Color <span className="text-stone-600 font-normal">(opt)</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={item.color}
-                        onChange={(e) => handleItemChange(idx, 'color', e.target.value)}
-                        placeholder="Black, Grey..."
-                        className="w-full bg-ink-night border border-ink-rule rounded px-2.5 py-1 text-xs text-cream placeholder-stone-600 focus:outline-none focus:border-purple-500 transition"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[10.5px] font-medium text-stone-400 mb-1">
-                        Qty <span className="text-red-400">*</span>
-                      </label>
+                      <label className="block text-xs font-medium text-text-muted mb-1">Quantity</label>
                       <input
                         type="number"
                         min="1"
-                        required
                         value={item.quantity}
-                        onChange={(e) => handleItemChange(idx, 'quantity', Math.max(1, parseInt(e.target.value, 10) || 1))}
-                        className="w-full bg-ink-night border border-ink-rule rounded px-2.5 py-1 text-xs text-cream focus:outline-none focus:border-purple-500 transition font-mono"
+                        onChange={(e) => handleItemChange(idx, 'quantity', Math.max(1, parseInt(e.target.value) || 1))}
+                        className="w-full h-9 bg-bg border border-border rounded-md px-2.5 text-xs text-text focus:border-accent tabular-nums"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[10.5px] font-medium text-stone-400 mb-1">
-                        SKU <span className="text-stone-600 font-normal">(opt)</span>
-                      </label>
+                      <label className="block text-xs font-medium text-text-muted mb-1">Color (optional)</label>
                       <input
                         type="text"
-                        value={item.sku}
-                        onChange={(e) => handleItemChange(idx, 'sku', e.target.value)}
-                        placeholder="BAP-3187"
-                        className="w-full bg-ink-night border border-ink-rule rounded px-2.5 py-1 text-xs text-cream placeholder-stone-600 focus:outline-none focus:border-purple-500 transition font-mono"
+                        placeholder="e.g. Washed Black"
+                        value={item.color}
+                        onChange={(e) => handleItemChange(idx, 'color', e.target.value)}
+                        className="w-full h-9 bg-bg border border-border rounded-md px-2.5 text-xs text-text placeholder-[#9CA3AF] focus:border-accent"
                       />
                     </div>
                   </div>
-
-                  {item.inventoryQuantity !== null && item.inventoryQuantity > 0 && (
-                    <div className="text-[10.5px] font-mono text-stone-400 flex items-center gap-1.5">
-                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                      <span>Stock:</span>
-                      <strong className="text-cream">{item.inventoryQuantity} units</strong>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
@@ -548,12 +538,12 @@ export default function ManualOrderModal({
         </form>
 
         {/* Modal Footer */}
-        <div className="px-5 py-3.5 border-t border-ink-rule flex items-center justify-between bg-ink-night">
+        <div className="px-5 py-3.5 border-t border-border flex items-center justify-between bg-surface">
           <button
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="font-mono text-xs px-3.5 py-2 rounded text-stone-400 hover:text-cream border border-ink-rule hover:border-stone-500 transition cursor-pointer"
+            className="h-10 px-4 bg-surface hover:bg-slate-50 dark:hover:bg-slate-800 text-text border border-border rounded-lg text-sm font-medium transition cursor-pointer"
           >
             Cancel
           </button>
@@ -562,16 +552,16 @@ export default function ManualOrderModal({
             type="button"
             onClick={handleSubmit}
             disabled={saving}
-            className="font-mono text-xs font-bold tracking-wide px-4 py-2 rounded-lg bg-stone-200 hover:bg-white text-stone-900 shadow-sm transition flex items-center gap-2 disabled:opacity-40 cursor-pointer"
+            className="h-10 px-5 bg-accent hover:bg-accent-hover text-white rounded-lg text-sm font-medium transition cursor-pointer flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? (
               <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
                 <span>Saving & Importing…</span>
               </>
             ) : (
               <>
-                <CheckCircle2 className="w-3.5 h-3.5" />
+                <CheckCircle2 className="w-4 h-4" />
                 <span>Create & Import Order</span>
               </>
             )}

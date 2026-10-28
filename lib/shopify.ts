@@ -38,6 +38,7 @@ export interface ShopifyOrderSummary {
   totalPrice: string;
   customer: string;
   customerEmail?: string;
+  tags?: string[];
   itemCount: number;
   items: ShopifyLineItem[];
 }

@@ -31,6 +31,7 @@ export interface ManifestOrder {
   createdAt?: string; // ISO creation timestamp
   notes?: string;
   fulfillmentStatus?: string; // e.g. "FULFILLED", "UNFULFILLED", "PARTIALLY_FULFILLED"
+  tags?: string[];
   items: ManifestItem[];
 }
 

@@ -8,28 +8,26 @@ import {
   OrderSourceFilter,
   OrderStatusFilter,
 } from '@/types/manifest';
-import { countActiveFilters } from '@/lib/filterOrders';
 import {
   Search,
   Filter,
+  ArrowUpDown,
   X,
-  ChevronDown,
-  RotateCcw,
+  Check,
   Calendar,
   Layers,
   Tag,
-  AlertTriangle,
-  ArrowUpDown,
-  Check,
+  RotateCcw,
+  ChevronDown,
 } from 'lucide-react';
 
 interface AdvancedFilterBarProps {
   filters: OrderFilterState;
-  onFilterChange: (newFilters: OrderFilterState) => void;
+  onFilterChange: (filters: OrderFilterState) => void;
   onResetFilters: () => void;
   totalOrders: number;
   filteredOrdersCount: number;
-  onMarkAllRemainingReady: () => void;
+  onMarkAllRemainingReady?: () => void;
 }
 
 export default function AdvancedFilterBar({
@@ -42,19 +40,30 @@ export default function AdvancedFilterBar({
 }: AdvancedFilterBarProps) {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
-  const activeFilterCount = countActiveFilters(filters);
-
-  const update = (patch: Partial<OrderFilterState>) => {
-    onFilterChange({ ...filters, ...patch });
+  const update = (partial: Partial<OrderFilterState>) => {
+    onFilterChange({ ...filters, ...partial });
   };
+
+  const activeFilterCount = [
+    filters.datePreset !== 'all',
+    filters.source !== 'all',
+    filters.status !== 'all',
+    Boolean(filters.customerPhone?.trim()),
+    Boolean(filters.brand?.trim()),
+    Boolean(filters.size?.trim()),
+    Boolean(filters.sku?.trim()),
+    filters.hasMissing,
+    filters.hasIncoming,
+    filters.hasReady,
+  ].filter(Boolean).length;
 
   const hasAnyFilterOrSearch =
     Boolean(filters.searchQuery.trim()) || activeFilterCount > 0;
 
   return (
     <div className="space-y-3 mb-6">
-      {/* Primary Bar */}
-      <div className="bg-ink-night-2 border border-ink-rule rounded-xl p-2.5 sm:p-3 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+      {/* Primary Tidy Toolbar */}
+      <div className="bg-surface border border-border rounded-lg p-2.5 sm:p-3 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
         {/* Search Input */}
         <div className="relative flex-1">
           <input
@@ -62,16 +71,17 @@ export default function AdvancedFilterBar({
             placeholder="Search customer, phone, order #, product, size, color, or SKU…"
             value={filters.searchQuery}
             onChange={(e) => update({ searchQuery: e.target.value })}
-            className="w-full bg-ink-night border border-ink-rule rounded-lg px-3.5 py-2 pl-9 pr-8 text-xs sm:text-sm font-medium text-cream placeholder-stone-500 focus:outline-none focus:border-stone-400 transition"
+            className="w-full h-10 bg-bg border border-border rounded-lg pl-9 pr-9 text-sm text-text placeholder-[#9CA3AF] focus:border-accent"
           />
-          <Search className="w-4 h-4 text-stone-500 absolute left-3 top-2.5" />
+          <Search className="w-4 h-4 text-text-muted absolute left-3 top-3 pointer-events-none" />
           {filters.searchQuery && (
             <button
               type="button"
               onClick={() => update({ searchQuery: '' })}
-              className="text-stone-400 hover:text-cream absolute right-2.5 top-2.5 p-0.5 rounded cursor-pointer"
+              className="text-text-muted hover:text-text absolute right-3 top-3 p-0.5 rounded cursor-pointer"
+              title="Clear search query"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-4 h-4" />
             </button>
           )}
         </div>
@@ -82,21 +92,21 @@ export default function AdvancedFilterBar({
           <button
             type="button"
             onClick={() => setIsPanelOpen((prev) => !prev)}
-            className={`font-mono text-xs font-semibold px-3 py-2 rounded-lg border transition cursor-pointer flex items-center gap-2 ${
+            className={`h-10 px-3.5 rounded-lg border text-sm font-medium transition cursor-pointer flex items-center gap-2 shadow-sm ${
               isPanelOpen || activeFilterCount > 0
-                ? 'bg-ink-night-3 border-stone-400 text-white font-bold'
-                : 'bg-ink-night border-ink-rule hover:border-stone-400 text-stone-300'
+                ? 'bg-indigo-50 border-indigo-200 text-indigo-700 dark:bg-indigo-950/40 dark:border-indigo-800 dark:text-indigo-300'
+                : 'bg-surface border-border text-text hover:bg-slate-50 dark:hover:bg-slate-800'
             }`}
           >
-            <Filter className="w-3.5 h-3.5" />
+            <Filter className="w-4 h-4 text-text-muted" />
             <span>Filters</span>
             {activeFilterCount > 0 && (
-              <span className="w-4 h-4 rounded-full bg-stone-300 text-stone-900 text-[10px] flex items-center justify-center font-bold">
+              <span className="w-5 h-5 rounded-full bg-accent text-white text-xs flex items-center justify-center font-semibold tabular-nums">
                 {activeFilterCount}
               </span>
             )}
             <ChevronDown
-              className={`w-3.5 h-3.5 transition-transform duration-150 ${
+              className={`w-3.5 h-3.5 text-text-muted transition-transform duration-150 ${
                 isPanelOpen ? 'rotate-180' : ''
               }`}
             />
@@ -104,11 +114,11 @@ export default function AdvancedFilterBar({
 
           {/* Sort Selector */}
           <div className="relative flex items-center">
-            <ArrowUpDown className="w-3.5 h-3.5 text-stone-500 absolute left-2.5 pointer-events-none" />
+            <ArrowUpDown className="w-4 h-4 text-text-muted absolute left-3 pointer-events-none" />
             <select
               value={filters.sortBy}
               onChange={(e) => update({ sortBy: e.target.value as OrderSortOption })}
-              className="bg-ink-night border border-ink-rule hover:border-stone-400 text-stone-300 font-mono text-xs font-medium rounded-lg pl-8 pr-7 py-2 appearance-none focus:outline-none focus:border-stone-400 transition cursor-pointer"
+              className="h-10 bg-surface border border-border hover:border-text-muted text-text text-sm font-medium rounded-lg pl-9 pr-8 appearance-none transition cursor-pointer shadow-sm"
             >
               <option value="newest">Sort: Newest First</option>
               <option value="oldest">Sort: Oldest First</option>
@@ -119,32 +129,34 @@ export default function AdvancedFilterBar({
               <option value="most_items">Sort: Most Items</option>
               <option value="fewest_items">Sort: Fewest Items</option>
             </select>
-            <ChevronDown className="w-3 h-3 text-stone-500 absolute right-2.5 pointer-events-none" />
+            <ChevronDown className="w-3.5 h-3.5 text-text-muted absolute right-3 pointer-events-none" />
           </div>
 
-          {/* Mark All Remaining Ready Button */}
-          <button
-            type="button"
-            onClick={onMarkAllRemainingReady}
-            className="bg-emerald-950/30 hover:bg-emerald-800 text-emerald-300 hover:text-white border border-emerald-800/40 font-mono text-xs font-semibold px-3 py-2 rounded-lg transition cursor-pointer ml-auto sm:ml-0 flex items-center gap-1.5"
-          >
-            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>Mark all ready</span>
-          </button>
+          {/* Mark All Remaining Ready Button: Clean Secondary Button */}
+          {onMarkAllRemainingReady && (
+            <button
+              type="button"
+              onClick={onMarkAllRemainingReady}
+              className="h-10 px-3.5 bg-surface hover:bg-slate-50 dark:hover:bg-slate-800 text-text border border-border rounded-lg text-sm font-medium transition cursor-pointer ml-auto sm:ml-0 flex items-center gap-1.5 shadow-sm"
+            >
+              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 stroke-[2.25]" />
+              <span>Mark all ready</span>
+            </button>
+          )}
         </div>
       </div>
 
       {/* Expandable Filter Panel */}
       {isPanelOpen && (
-        <div className="bg-ink-night-2 border border-ink-rule rounded-xl p-4 sm:p-5 shadow-lg space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-ink-rule">
+        <div className="bg-surface border border-border rounded-lg p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-border">
             <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-stone-400" />
-              <h4 className="font-mono text-xs font-bold uppercase tracking-wider text-cream">
+              <Filter className="w-4 h-4 text-text-muted" />
+              <h4 className="text-sm font-semibold text-text">
                 Filter Criteria
               </h4>
               {activeFilterCount > 0 && (
-                <span className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded bg-ink-night-3 text-stone-300 border border-ink-rule">
+                <span className="text-xs font-medium px-2 py-0.5 rounded bg-bg text-text-muted border border-border tabular-nums">
                   {activeFilterCount} active
                 </span>
               )}
@@ -154,19 +166,19 @@ export default function AdvancedFilterBar({
               type="button"
               onClick={onResetFilters}
               disabled={activeFilterCount === 0}
-              className="font-mono text-xs text-stone-400 hover:text-cream flex items-center gap-1.5 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="text-xs text-text-muted hover:text-text flex items-center gap-1.5 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer font-medium"
             >
-              <RotateCcw className="w-3 h-3" />
+              <RotateCcw className="w-3.5 h-3.5" />
               <span>Reset all</span>
             </button>
           </div>
 
           {/* Grid of Filter Options */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* Column 1: Date Range */}
             <div className="space-y-2.5">
-              <label className="block font-mono text-xs uppercase tracking-wider text-stone-400 font-semibold flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-stone-400" />
+              <label className="text-xs font-semibold text-text-muted flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-text-muted" />
                 <span>Date Range</span>
               </label>
 
@@ -185,10 +197,10 @@ export default function AdvancedFilterBar({
                     key={item.id}
                     type="button"
                     onClick={() => update({ datePreset: item.id as DateFilterPreset })}
-                    className={`font-mono text-xs font-medium px-2.5 py-1 rounded-md transition cursor-pointer border ${
+                    className={`text-xs font-medium px-2.5 py-1.5 rounded-md transition cursor-pointer border ${
                       filters.datePreset === item.id
-                        ? 'bg-stone-200 text-stone-900 border-stone-200 font-bold'
-                        : 'bg-ink-night border-ink-rule text-stone-300 hover:border-stone-500'
+                        ? 'bg-accent text-white border-accent'
+                        : 'bg-bg border-border text-text hover:border-text-muted'
                     }`}
                   >
                     {item.label}
@@ -199,21 +211,21 @@ export default function AdvancedFilterBar({
               {filters.datePreset === 'custom' && (
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   <div>
-                    <label className="block text-[10px] text-stone-400 mb-0.5">Start Date</label>
+                    <label className="block text-xs text-text-muted mb-1">Start Date</label>
                     <input
                       type="date"
                       value={filters.customStartDate || ''}
                       onChange={(e) => update({ customStartDate: e.target.value })}
-                      className="w-full bg-ink-night border border-ink-rule rounded-md px-2 py-1 text-xs text-cream focus:outline-none focus:border-stone-400 font-mono"
+                      className="w-full h-9 bg-bg border border-border rounded-md px-2 text-xs text-text focus:border-accent"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-stone-400 mb-0.5">End Date</label>
+                    <label className="block text-xs text-text-muted mb-1">End Date</label>
                     <input
                       type="date"
                       value={filters.customEndDate || ''}
                       onChange={(e) => update({ customEndDate: e.target.value })}
-                      className="w-full bg-ink-night border border-ink-rule rounded-md px-2 py-1 text-xs text-cream focus:outline-none focus:border-stone-400 font-mono"
+                      className="w-full h-9 bg-bg border border-border rounded-md px-2 text-xs text-text focus:border-accent"
                     />
                   </div>
                 </div>
@@ -221,10 +233,10 @@ export default function AdvancedFilterBar({
             </div>
 
             {/* Column 2: Order Source & Status */}
-            <div className="space-y-3.5">
+            <div className="space-y-4">
               <div>
-                <label className="block font-mono text-xs uppercase tracking-wider text-stone-400 font-semibold mb-1.5 flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-stone-400" />
+                <label className="text-xs font-semibold text-text-muted flex items-center gap-1.5 mb-2">
+                  <Layers className="w-3.5 h-3.5 text-text-muted" />
                   <span>Order Source</span>
                 </label>
                 <div className="flex gap-1.5">
@@ -237,10 +249,10 @@ export default function AdvancedFilterBar({
                       key={src.id}
                       type="button"
                       onClick={() => update({ source: src.id as OrderSourceFilter })}
-                      className={`font-mono text-xs px-2.5 py-1 rounded-md transition cursor-pointer border flex-1 text-center ${
+                      className={`text-xs px-2.5 py-1.5 rounded-md transition cursor-pointer border flex-1 text-center font-medium ${
                         filters.source === src.id
-                          ? 'bg-stone-200 text-stone-900 border-stone-200 font-bold'
-                          : 'bg-ink-night border-ink-rule text-stone-300 hover:border-stone-500'
+                          ? 'bg-accent text-white border-accent'
+                          : 'bg-bg border-border text-text hover:border-text-muted'
                       }`}
                     >
                       {src.label}
@@ -250,8 +262,8 @@ export default function AdvancedFilterBar({
               </div>
 
               <div>
-                <label className="block font-mono text-xs uppercase tracking-wider text-stone-400 font-semibold mb-1.5 flex items-center gap-1.5">
-                  <Tag className="w-3.5 h-3.5 text-stone-400" />
+                <label className="text-xs font-semibold text-text-muted flex items-center gap-1.5 mb-2">
+                  <Tag className="w-3.5 h-3.5 text-text-muted" />
                   <span>Status Filter</span>
                 </label>
                 <div className="grid grid-cols-2 gap-1.5">
@@ -266,10 +278,10 @@ export default function AdvancedFilterBar({
                       key={st.id}
                       type="button"
                       onClick={() => update({ status: st.id as OrderStatusFilter })}
-                      className={`font-mono text-xs px-2 py-1 rounded-md transition cursor-pointer border text-center ${
+                      className={`text-xs px-2.5 py-1.5 rounded-md transition cursor-pointer border text-center font-medium ${
                         filters.status === st.id
-                          ? 'bg-stone-200 text-stone-900 border-stone-200 font-bold'
-                          : 'bg-ink-night border-ink-rule text-stone-300 hover:border-stone-500'
+                          ? 'bg-accent text-white border-accent'
+                          : 'bg-bg border-border text-text hover:border-text-muted'
                       }`}
                     >
                       {st.label}
@@ -281,8 +293,7 @@ export default function AdvancedFilterBar({
 
             {/* Column 3: Quick Filter Flags */}
             <div className="space-y-2.5">
-              <label className="block font-mono text-xs uppercase tracking-wider text-stone-400 font-semibold flex items-center gap-1.5">
-                <AlertTriangle className="w-3.5 h-3.5 text-stone-400" />
+              <label className="text-xs font-semibold text-text-muted flex items-center gap-1.5">
                 <span>Quick Status Flags</span>
               </label>
 
@@ -290,14 +301,14 @@ export default function AdvancedFilterBar({
                 <button
                   type="button"
                   onClick={() => update({ hasMissing: !filters.hasMissing })}
-                  className={`w-full text-left font-mono text-xs px-3 py-1.5 rounded-lg transition cursor-pointer border flex items-center justify-between ${
+                  className={`w-full text-left text-xs px-3 py-2 rounded-lg transition cursor-pointer border flex items-center justify-between font-medium ${
                     filters.hasMissing
-                      ? 'bg-rose-950/40 border-rose-800/60 text-rose-300 font-bold'
-                      : 'bg-ink-night border-ink-rule text-stone-300 hover:border-stone-500'
+                      ? 'bg-[#FEE2E2] border-[#FECACA] text-[#991B1B] dark:bg-[#7F1D1D] dark:border-[#991B1B] dark:text-[#FECACA]'
+                      : 'bg-bg border-border text-text hover:border-text-muted'
                   }`}
                 >
                   <span className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-rose-500/80"></span>
+                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
                     Contains Missing Items
                   </span>
                   {filters.hasMissing && <X className="w-3.5 h-3.5" />}
@@ -306,14 +317,14 @@ export default function AdvancedFilterBar({
                 <button
                   type="button"
                   onClick={() => update({ hasIncoming: !filters.hasIncoming })}
-                  className={`w-full text-left font-mono text-xs px-3 py-1.5 rounded-lg transition cursor-pointer border flex items-center justify-between ${
+                  className={`w-full text-left text-xs px-3 py-2 rounded-lg transition cursor-pointer border flex items-center justify-between font-medium ${
                     filters.hasIncoming
-                      ? 'bg-blue-950/40 border-blue-800/60 text-blue-300 font-bold'
-                      : 'bg-ink-night border-ink-rule text-stone-300 hover:border-stone-500'
+                      ? 'bg-[#DBEAFE] border-[#BFDBFE] text-[#1E40AF] dark:bg-[#1E3A8A] dark:border-[#1E40AF] dark:text-[#BFDBFE]'
+                      : 'bg-bg border-border text-text hover:border-text-muted'
                   }`}
                 >
                   <span className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-blue-500/80"></span>
+                    <span className="w-2 h-2 rounded-full bg-blue-500"></span>
                     Contains Incoming Items
                   </span>
                   {filters.hasIncoming && <X className="w-3.5 h-3.5" />}
@@ -322,14 +333,14 @@ export default function AdvancedFilterBar({
                 <button
                   type="button"
                   onClick={() => update({ hasReady: !filters.hasReady })}
-                  className={`w-full text-left font-mono text-xs px-3 py-1.5 rounded-lg transition cursor-pointer border flex items-center justify-between ${
+                  className={`w-full text-left text-xs px-3 py-2 rounded-lg transition cursor-pointer border flex items-center justify-between font-medium ${
                     filters.hasReady
-                      ? 'bg-emerald-950/40 border-emerald-800/60 text-emerald-300 font-bold'
-                      : 'bg-ink-night border-ink-rule text-stone-300 hover:border-stone-500'
+                      ? 'bg-[#DCFCE7] border-[#BBF7D0] text-[#166534] dark:bg-[#14532D] dark:border-[#166534] dark:text-[#BBF7D0]'
+                      : 'bg-bg border-border text-text hover:border-text-muted'
                   }`}
                 >
                   <span className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500/80"></span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                     Contains Ready Items
                   </span>
                   {filters.hasReady && <X className="w-3.5 h-3.5" />}
@@ -339,48 +350,48 @@ export default function AdvancedFilterBar({
           </div>
 
           {/* Secondary Specific Fields row */}
-          <div className="pt-3 border-t border-ink-rule grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div className="pt-4 border-t border-border grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div>
-              <label className="block text-[11px] text-stone-400 mb-1">Customer Phone</label>
+              <label className="block text-xs text-text-muted mb-1 font-medium">Customer Phone</label>
               <input
                 type="text"
                 placeholder="Phone number…"
                 value={filters.customerPhone || ''}
                 onChange={(e) => update({ customerPhone: e.target.value })}
-                className="w-full bg-ink-night border border-ink-rule rounded-md px-2.5 py-1 text-xs text-cream placeholder-stone-500 focus:outline-none focus:border-stone-400 font-mono"
+                className="w-full h-9 bg-bg border border-border rounded-md px-2.5 text-xs text-text placeholder-[#9CA3AF] focus:border-accent"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] text-stone-400 mb-1">Product Brand</label>
+              <label className="block text-xs text-text-muted mb-1 font-medium">Product Brand</label>
               <input
                 type="text"
                 placeholder="e.g. BAPE, Nike…"
                 value={filters.brand || ''}
                 onChange={(e) => update({ brand: e.target.value })}
-                className="w-full bg-ink-night border border-ink-rule rounded-md px-2.5 py-1 text-xs text-cream placeholder-stone-500 focus:outline-none focus:border-stone-400"
+                className="w-full h-9 bg-bg border border-border rounded-md px-2.5 text-xs text-text placeholder-[#9CA3AF] focus:border-accent"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] text-stone-400 mb-1">Size / Variant</label>
+              <label className="block text-xs text-text-muted mb-1 font-medium">Size / Variant</label>
               <input
                 type="text"
                 placeholder="e.g. S, M, XL…"
                 value={filters.size || ''}
                 onChange={(e) => update({ size: e.target.value })}
-                className="w-full bg-ink-night border border-ink-rule rounded-md px-2.5 py-1 text-xs text-cream placeholder-stone-500 focus:outline-none focus:border-stone-400 font-mono"
+                className="w-full h-9 bg-bg border border-border rounded-md px-2.5 text-xs text-text placeholder-[#9CA3AF] focus:border-accent"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] text-stone-400 mb-1">SKU</label>
+              <label className="block text-xs text-text-muted mb-1 font-medium">SKU</label>
               <input
                 type="text"
                 placeholder="e.g. NIK-5126…"
                 value={filters.sku || ''}
                 onChange={(e) => update({ sku: e.target.value })}
-                className="w-full bg-ink-night border border-ink-rule rounded-md px-2.5 py-1 text-xs text-cream placeholder-stone-500 focus:outline-none focus:border-stone-400 font-mono"
+                className="w-full h-9 bg-bg border border-border rounded-md px-2.5 text-xs text-text placeholder-[#9CA3AF] focus:border-accent"
               />
             </div>
           </div>
@@ -389,18 +400,18 @@ export default function AdvancedFilterBar({
 
       {/* Active Filter Chips & Result Counter */}
       {hasAnyFilterOrSearch && (
-        <div className="flex items-center justify-between gap-2 flex-wrap text-xs pt-0.5">
+        <div className="flex items-center justify-between gap-2 flex-wrap text-xs pt-1">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="font-mono text-xs text-stone-400 font-semibold">Active:</span>
+            <span className="text-xs text-text-muted font-medium">Active filters:</span>
 
             {/* Search query chip */}
             {filters.searchQuery.trim() && (
-              <span className="inline-flex items-center gap-1 font-mono text-xs px-2.5 py-0.5 rounded-md bg-ink-night-3 border border-ink-rule text-stone-200">
+              <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md bg-surface border border-border text-text shadow-sm">
                 <span>&ldquo;{filters.searchQuery}&rdquo;</span>
                 <button
                   type="button"
                   onClick={() => update({ searchQuery: '' })}
-                  className="hover:text-white cursor-pointer ml-0.5"
+                  className="hover:text-red-500 cursor-pointer ml-1"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -409,12 +420,12 @@ export default function AdvancedFilterBar({
 
             {/* Date preset chip */}
             {filters.datePreset !== 'all' && (
-              <span className="inline-flex items-center gap-1 font-mono text-xs px-2.5 py-0.5 rounded-md bg-ink-night-3 border border-ink-rule text-stone-200">
+              <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md bg-surface border border-border text-text shadow-sm">
                 <span>Date: {filters.datePreset}</span>
                 <button
                   type="button"
                   onClick={() => update({ datePreset: 'all', customStartDate: undefined, customEndDate: undefined })}
-                  className="hover:text-white cursor-pointer ml-0.5"
+                  className="hover:text-red-500 cursor-pointer ml-1"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -423,12 +434,12 @@ export default function AdvancedFilterBar({
 
             {/* Source chip */}
             {filters.source !== 'all' && (
-              <span className="inline-flex items-center gap-1 font-mono text-xs px-2.5 py-0.5 rounded-md bg-ink-night-3 border border-ink-rule text-stone-200">
+              <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md bg-surface border border-border text-text shadow-sm">
                 <span>Source: {filters.source}</span>
                 <button
                   type="button"
                   onClick={() => update({ source: 'all' })}
-                  className="hover:text-white cursor-pointer ml-0.5"
+                  className="hover:text-red-500 cursor-pointer ml-1"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -437,26 +448,82 @@ export default function AdvancedFilterBar({
 
             {/* Status chip */}
             {filters.status !== 'all' && (
-              <span className="inline-flex items-center gap-1 font-mono text-xs px-2.5 py-0.5 rounded-md bg-ink-night-3 border border-ink-rule text-stone-200">
+              <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md bg-surface border border-border text-text shadow-sm">
                 <span>Status: {filters.status}</span>
                 <button
                   type="button"
                   onClick={() => update({ status: 'all' })}
-                  className="hover:text-white cursor-pointer ml-0.5"
+                  className="hover:text-red-500 cursor-pointer ml-1"
                 >
                   <X className="w-3 h-3" />
                 </button>
               </span>
             )}
 
-            {/* Quick flags chips */}
+            {/* Phone chip */}
+            {filters.customerPhone?.trim() && (
+              <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md bg-surface border border-border text-text shadow-sm">
+                <span>Phone: {filters.customerPhone}</span>
+                <button
+                  type="button"
+                  onClick={() => update({ customerPhone: '' })}
+                  className="hover:text-red-500 cursor-pointer ml-1"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+
+            {/* Brand chip */}
+            {filters.brand?.trim() && (
+              <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md bg-surface border border-border text-text shadow-sm">
+                <span>Brand: {filters.brand}</span>
+                <button
+                  type="button"
+                  onClick={() => update({ brand: '' })}
+                  className="hover:text-red-500 cursor-pointer ml-1"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+
+            {/* Size chip */}
+            {filters.size?.trim() && (
+              <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md bg-surface border border-border text-text shadow-sm">
+                <span>Size: {filters.size}</span>
+                <button
+                  type="button"
+                  onClick={() => update({ size: '' })}
+                  className="hover:text-red-500 cursor-pointer ml-1"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+
+            {/* SKU chip */}
+            {filters.sku?.trim() && (
+              <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md bg-surface border border-border text-text shadow-sm">
+                <span>SKU: {filters.sku}</span>
+                <button
+                  type="button"
+                  onClick={() => update({ sku: '' })}
+                  className="hover:text-red-500 cursor-pointer ml-1"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+
+            {/* Flag chips */}
             {filters.hasMissing && (
-              <span className="inline-flex items-center gap-1 font-mono text-xs px-2.5 py-0.5 rounded-md bg-rose-950/40 border border-rose-800/50 text-rose-300">
-                <span>Has Missing Items</span>
+              <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md bg-[#FEE2E2] text-[#991B1B] dark:bg-[#7F1D1D] dark:text-[#FECACA]">
+                <span>Missing items</span>
                 <button
                   type="button"
                   onClick={() => update({ hasMissing: false })}
-                  className="hover:text-white cursor-pointer ml-0.5"
+                  className="hover:opacity-75 cursor-pointer ml-1"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -464,12 +531,12 @@ export default function AdvancedFilterBar({
             )}
 
             {filters.hasIncoming && (
-              <span className="inline-flex items-center gap-1 font-mono text-xs px-2.5 py-0.5 rounded-md bg-blue-950/40 border border-blue-800/50 text-blue-300">
-                <span>Has Incoming Items</span>
+              <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md bg-[#DBEAFE] text-[#1E40AF] dark:bg-[#1E3A8A] dark:text-[#BFDBFE]">
+                <span>Incoming items</span>
                 <button
                   type="button"
                   onClick={() => update({ hasIncoming: false })}
-                  className="hover:text-white cursor-pointer ml-0.5"
+                  className="hover:opacity-75 cursor-pointer ml-1"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -477,51 +544,12 @@ export default function AdvancedFilterBar({
             )}
 
             {filters.hasReady && (
-              <span className="inline-flex items-center gap-1 font-mono text-xs px-2.5 py-0.5 rounded-md bg-emerald-950/40 border border-emerald-800/50 text-emerald-300">
-                <span>Has Ready Items</span>
+              <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md bg-[#DCFCE7] text-[#166534] dark:bg-[#14532D] dark:text-[#BBF7D0]">
+                <span>Ready items</span>
                 <button
                   type="button"
                   onClick={() => update({ hasReady: false })}
-                  className="hover:text-white cursor-pointer ml-0.5"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            )}
-
-            {filters.brand && (
-              <span className="inline-flex items-center gap-1 font-mono text-xs px-2.5 py-0.5 rounded-md bg-ink-night-3 border border-ink-rule text-stone-200">
-                <span>Brand: {filters.brand}</span>
-                <button
-                  type="button"
-                  onClick={() => update({ brand: undefined })}
-                  className="hover:text-white cursor-pointer ml-0.5"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            )}
-
-            {filters.size && (
-              <span className="inline-flex items-center gap-1 font-mono text-xs px-2.5 py-0.5 rounded-md bg-ink-night-3 border border-ink-rule text-stone-200">
-                <span>Size: {filters.size}</span>
-                <button
-                  type="button"
-                  onClick={() => update({ size: undefined })}
-                  className="hover:text-white cursor-pointer ml-0.5"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            )}
-
-            {filters.sku && (
-              <span className="inline-flex items-center gap-1 font-mono text-xs px-2.5 py-0.5 rounded-md bg-ink-night-3 border border-ink-rule text-stone-200">
-                <span>SKU: {filters.sku}</span>
-                <button
-                  type="button"
-                  onClick={() => update({ sku: undefined })}
-                  className="hover:text-white cursor-pointer ml-0.5"
+                  className="hover:opacity-75 cursor-pointer ml-1"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -531,15 +559,15 @@ export default function AdvancedFilterBar({
             <button
               type="button"
               onClick={onResetFilters}
-              className="font-mono text-xs text-stone-400 hover:text-stone-200 underline underline-offset-2 ml-1 cursor-pointer"
+              className="text-xs text-text-muted hover:text-text underline underline-offset-2 ml-1 cursor-pointer"
             >
-              Clear All
+              Clear all
             </button>
           </div>
 
-          <div className="font-mono text-xs text-stone-400 ml-auto">
-            Showing <strong className="text-cream">{filteredOrdersCount}</strong> of{' '}
-            <strong className="text-cream">{totalOrders}</strong> order{totalOrders === 1 ? '' : 's'}
+          <div className="text-xs text-text-muted ml-auto">
+            Showing <strong className="text-text tabular-nums">{filteredOrdersCount}</strong> of{' '}
+            <strong className="text-text tabular-nums">{totalOrders}</strong> order{totalOrders === 1 ? '' : 's'}
           </div>
         </div>
       )}

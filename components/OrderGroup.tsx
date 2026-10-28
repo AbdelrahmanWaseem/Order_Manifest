@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ManifestOrder, ManifestItem, ItemStatus } from '@/types/manifest';
 import TicketCard from './TicketCard';
-import { Phone, Calendar, Check, Trash2 } from 'lucide-react';
+import { getCustomerInitials } from '@/lib/utils';
+import { Phone, Calendar, Check, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface OrderGroupProps {
   order: ManifestOrder;
@@ -30,137 +31,181 @@ export default function OrderGroup({
 }: OrderGroupProps) {
   if (filteredItems.length === 0) return null;
 
-  // Generate 2-letter customer initials for avatar
-  const initials = order.customer
-    .split(' ')
-    .filter(Boolean)
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase() || 'CU';
-
+  const initials = getCustomerInitials(order.customer);
   const isManual = order.source === 'manual' || order.id.startsWith('MAN-');
+  const isInstagram = Boolean(order.tags?.some((t) => t.toLowerCase().includes('ig') || t.toLowerCase().includes('instagram')));
+
+  // Check if every item in this order is stamped (i.e. not pending)
+  const allItemsStamped = order.items.length > 0 && order.items.every((i) => i.status !== 'pending');
+  const allItemsReady = order.items.length > 0 && order.items.every((i) => i.status === 'ready');
+
+  // Allow collapsing when all items are stamped
+  const [isManuallyExpanded, setIsManuallyExpanded] = useState<boolean | null>(null);
+
+  // If all items are stamped, default to collapsed unless user explicitly expanded
+  const isCollapsed = allItemsStamped && isManuallyExpanded !== true;
+
+  const fulfillmentUpper = order.fulfillmentStatus?.toUpperCase();
 
   return (
-    <div className="mb-8 bg-ink-night-2 border border-ink-rule rounded-xl p-4 sm:p-5 shadow-sm">
-      {/* Group Header */}
-      <div className="flex items-center justify-between gap-3 mb-3.5 pb-3 border-b border-ink-rule flex-wrap">
-        <div className="flex items-center gap-2.5 flex-wrap">
-          {/* Customer Avatar */}
-          <div className="w-8 h-8 rounded-lg bg-ink-night-3 border border-ink-rule text-stone-300 font-bold flex items-center justify-center text-xs shrink-0">
+    <div className="mb-6 bg-surface border border-border rounded-lg p-4 sm:p-5 shadow-sm transition-colors">
+      {/* Header Row */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/80">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Customer Avatar - Arabic compatible */}
+          <div className="w-9 h-9 rounded-full bg-bg border border-border text-text font-semibold flex items-center justify-center text-xs shrink-0 select-none">
             {initials}
           </div>
 
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-base sm:text-lg font-bold text-cream tracking-tight">
+              {/* Customer Name with dir="auto" */}
+              <h3 className="text-base font-semibold text-text tracking-tight" dir="auto">
                 {order.customer}
               </h3>
 
-              <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-ink-night border border-ink-rule text-stone-300">
+              {/* Order Number - Bold text, tabular-nums (NO ORANGE) */}
+              <span className="text-sm font-semibold text-text tabular-nums">
                 {order.id}
               </span>
 
+              {/* Tag Pills */}
               {isManual && (
-                <span className="font-mono text-[11px] font-medium px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
+                <span className="text-xs font-medium px-2 py-0.5 rounded bg-bg text-text-muted border border-border">
                   Manual Order
                 </span>
               )}
 
-              {order.fulfillmentStatus && (
+              {isInstagram && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded bg-bg text-text-muted border border-border">
+                  IG order
+                </span>
+              )}
+
+              {/* Fulfillment Status */}
+              {fulfillmentUpper && (
                 <span
-                  className={`font-mono text-[11px] font-medium px-2 py-0.5 rounded border ${
-                    order.fulfillmentStatus.toUpperCase() === 'FULFILLED'
-                      ? 'bg-emerald-950/40 text-emerald-300 border-emerald-800/40'
-                      : order.fulfillmentStatus.toUpperCase().includes('PARTIAL')
-                      ? 'bg-blue-950/40 text-blue-300 border-blue-800/40'
-                      : 'bg-amber-950/40 text-amber-300 border-amber-800/40'
+                  className={`text-xs font-medium px-2 py-0.5 rounded ${
+                    fulfillmentUpper === 'FULFILLED'
+                      ? 'bg-[#DCFCE7] text-[#166534] dark:bg-[#14532D] dark:text-[#BBF7D0]'
+                      : fulfillmentUpper.includes('PARTIAL')
+                      ? 'bg-[#DBEAFE] text-[#1E40AF] dark:bg-[#1E3A8A] dark:text-[#BFDBFE]'
+                      : 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#451A03] dark:text-[#FDE68A]'
                   }`}
                 >
-                  {order.fulfillmentStatus.toUpperCase() === 'FULFILLED'
+                  {fulfillmentUpper === 'FULFILLED'
                     ? 'Fulfilled'
-                    : order.fulfillmentStatus.toUpperCase().includes('PARTIAL')
+                    : fulfillmentUpper.includes('PARTIAL')
                     ? 'Partial'
                     : 'Unfulfilled'}
+                </span>
+              )}
+
+              {/* All Items Stamped Badge when collapsed */}
+              {allItemsStamped && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded bg-[#DCFCE7] text-[#166534] dark:bg-[#14532D] dark:text-[#BBF7D0] flex items-center gap-1">
+                  ✓ {allItemsReady ? 'All items ready' : 'All items stamped'}
                 </span>
               )}
             </div>
 
             {/* Sub-row metadata: phone, date, items count */}
-            <div className="flex items-center gap-3 text-xs text-stone-400 font-mono mt-0.5 flex-wrap">
+            <div className="flex items-center gap-3 text-xs text-text-muted mt-1 flex-wrap">
               {order.customerPhone && (
-                <span className="flex items-center gap-1 text-stone-300">
-                  <Phone className="w-3 h-3 text-stone-400" />
-                  <span>{order.customerPhone}</span>
+                <span className="flex items-center gap-1">
+                  <Phone className="w-3.5 h-3.5 text-text-muted" />
+                  <span className="tabular-nums" dir="ltr">{order.customerPhone}</span>
                 </span>
               )}
 
               {order.orderDate && (
-                <span className="flex items-center gap-1 text-stone-400">
-                  <Calendar className="w-3 h-3 text-stone-500" />
-                  <span>{new Date(order.orderDate).toLocaleDateString()}</span>
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5 text-text-muted" />
+                  <span className="tabular-nums">{new Date(order.orderDate).toLocaleDateString()}</span>
                 </span>
               )}
 
-              <span className="text-stone-300">
+              <span className="tabular-nums">
                 {totalItemCount} item{totalItemCount > 1 ? 's' : ''}
               </span>
 
               {activeFilter && (
-                <span className="text-stone-400">
-                  ({filteredItems.length} matching filter)
-                </span>
+                <span>({filteredItems.length} matching filter)</span>
               )}
             </div>
           </div>
         </div>
 
-        {/* Action buttons: Remove and Mark all ready */}
-        <div className="flex items-center gap-2">
+        {/* Action buttons: Remove and Mark all ready + Expand/Collapse button */}
+        <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
           <button
             type="button"
             onClick={() => onRemoveOrder(order.id)}
-            className="font-mono text-xs font-medium px-2.5 py-1.5 rounded-lg text-stone-400 hover:text-stone-200 hover:bg-ink-night-3 border border-ink-rule transition cursor-pointer flex items-center gap-1"
-            title="Remove this order from the manifest"
+            className="h-9 px-3 bg-surface hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 dark:text-red-400 border border-border hover:border-red-200 dark:hover:border-red-800 rounded-lg text-xs font-medium transition cursor-pointer flex items-center gap-1.5 shadow-sm"
+            title="Remove this order from manifest"
           >
             <Trash2 className="w-3.5 h-3.5" />
             <span>Remove</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => onMarkAllReady(order.id)}
-            className="font-mono text-xs font-semibold px-3 py-1.5 rounded-lg bg-emerald-950/30 hover:bg-emerald-800 text-emerald-300 hover:text-white border border-emerald-800/40 transition cursor-pointer flex items-center gap-1"
-          >
-            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>Mark all ready</span>
-          </button>
+          {!allItemsReady && (
+            <button
+              type="button"
+              onClick={() => onMarkAllReady(order.id)}
+              className="h-9 px-3 bg-surface hover:bg-slate-50 dark:hover:bg-slate-800 text-text border border-border rounded-lg text-xs font-medium transition cursor-pointer flex items-center gap-1.5 shadow-sm"
+              title="Mark all items in this order as Ready"
+            >
+              <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 stroke-[2.25]" />
+              <span>Mark all ready</span>
+            </button>
+          )}
+
+          {allItemsStamped && (
+            <button
+              type="button"
+              onClick={() => setIsManuallyExpanded(isCollapsed)}
+              className="h-9 px-2.5 bg-surface hover:bg-slate-50 dark:hover:bg-slate-800 text-text-muted hover:text-text border border-border rounded-lg text-xs font-medium transition cursor-pointer flex items-center gap-1 shadow-sm"
+              title={isCollapsed ? 'Expand items' : 'Collapse items'}
+            >
+              {isCollapsed ? (
+                <>
+                  <span>View items</span>
+                  <ChevronDown className="w-4 h-4" />
+                </>
+              ) : (
+                <>
+                  <span>Collapse</span>
+                  <ChevronUp className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
 
       {/* Order Notes Banner */}
       {order.notes && (
-        <div className="text-xs text-stone-300 bg-ink-night border border-ink-rule rounded-lg px-3 py-1.5 mb-3.5 flex items-start gap-2">
-          <span className="font-mono text-[10px] uppercase font-bold text-stone-400 shrink-0 mt-0.5">
-            Note:
-          </span>
-          <span className="italic">{order.notes}</span>
+        <div className="text-xs text-text-muted bg-bg border border-border rounded-md px-3 py-2 mt-3 flex items-start gap-2">
+          <span className="font-semibold text-text shrink-0">Note:</span>
+          <span>{order.notes}</span>
         </div>
       )}
 
-      {/* Tickets Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
-        {filteredItems.map((item) => (
-          <TicketCard
-            key={item.id}
-            orderId={order.id}
-            item={item}
-            onSetStatus={onSetStatus}
-            onCycleStatus={onCycleStatus}
-            onSetNote={onSetNote}
-          />
-        ))}
-      </div>
+      {/* Responsive Item Cards Grid: repeat(auto-fill, minmax(260px, 1fr)) */}
+      {!isCollapsed && (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-3 pt-3.5">
+          {filteredItems.map((item) => (
+            <TicketCard
+              key={item.id}
+              orderId={order.id}
+              item={item}
+              onSetStatus={onSetStatus}
+              onCycleStatus={onCycleStatus}
+              onSetNote={onSetNote}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

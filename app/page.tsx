@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import TopBar from '@/components/TopBar';
 import ImportSection from '@/components/ImportSection';
-import StockConflictBanner from '@/components/StockConflictBanner';
 import AdvancedFilterBar from '@/components/AdvancedFilterBar';
 import OrderGroup from '@/components/OrderGroup';
 import ShipmentReportBar from '@/components/ShipmentReportBar';
@@ -20,8 +19,15 @@ import {
   OrderFilterState,
 } from '@/types/manifest';
 import { filterAndSortOrders, INITIAL_FILTER_STATE } from '@/lib/filterOrders';
+import { PackageOpen, SearchX, Plus, X, CheckCircle2, AlertCircle } from 'lucide-react';
 
 const LOCAL_STORAGE_BATCH_KEY = 'order_manifest_active_batch';
+
+interface Toast {
+  id: string;
+  message: string;
+  type: 'success' | 'error' | 'info';
+}
 
 export default function OrderManifestApp() {
   // Manifest batch state
@@ -33,9 +39,19 @@ export default function OrderManifestApp() {
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
   const [isManualOrderOpen, setIsManualOrderOpen] = useState(false);
   const [savedReportsCount, setSavedReportsCount] = useState(0);
+  const [hideBanner, setHideBanner] = useState(true);
+  const [toasts, setToasts] = useState<Toast[]>([]);
 
   const reportRef = useRef<HTMLDivElement>(null);
   const boardRef = useRef<HTMLDivElement>(null);
+
+  const addToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    const id = `${Date.now()}-${Math.random()}`;
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 3500);
+  };
 
   // Fetch saved reports count on load
   const refreshArchiveCount = async () => {
@@ -60,6 +76,10 @@ export default function OrderManifestApp() {
           setOrders(parsed);
         }
       }
+      const bannerDismissed = localStorage.getItem('hide_ops_banner');
+      if (!bannerDismissed) {
+        setHideBanner(false);
+      }
     } catch (e) {
       console.warn('Failed to hydrate active batch from localStorage:', e);
     }
@@ -67,7 +87,6 @@ export default function OrderManifestApp() {
     refreshArchiveCount();
 
     if (window.location.search.includes('sample=1')) {
-      // Pre-load sample orders for demonstration
       fetch('/api/shopify/lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -79,6 +98,13 @@ export default function OrderManifestApp() {
         });
     }
   }, []);
+
+  const dismissBanner = () => {
+    setHideBanner(true);
+    try {
+      localStorage.setItem('hide_ops_banner', '1');
+    } catch {}
+  };
 
   // Sync active manifest batch to localStorage
   useEffect(() => {
@@ -118,6 +144,18 @@ export default function OrderManifestApp() {
     return res;
   }, [allItems]);
 
+  // Total and stamped items count
+  const totalItemsCount = useMemo(() => {
+    return orders.reduce((sum, o) => sum + o.items.length, 0);
+  }, [orders]);
+
+  const stampedItemsCount = useMemo(() => {
+    return orders.reduce(
+      (sum, o) => sum + o.items.filter((i) => i.status !== 'pending').length,
+      0
+    );
+  }, [orders]);
+
   // Update status message dynamically based on remaining items
   useEffect(() => {
     if (orders.length === 0) {
@@ -128,11 +166,11 @@ export default function OrderManifestApp() {
     if (pendingCount > 0) {
       setReportStatusMessage(`${pendingCount} item(s) still pending — stamp items or mark remaining Ready.`);
     } else {
-      setReportStatusMessage('All items stamped. Ready to generate shipment report.');
+      setReportStatusMessage('All items stamped! Ready to generate shipment manifest report.');
     }
   }, [orders.length, counts.pending]);
 
-  // Conflict detection
+  // Conflict detection (internal calculation for report persistence)
   const conflicts = useMemo<StockConflict[]>(() => {
     const readyItems = allItems.filter((i) => i.status === 'ready');
     const grouped: Record<
@@ -142,48 +180,49 @@ export default function OrderManifestApp() {
         name: string;
         size: string;
         inventoryQuantity: number | null;
-        totalReadyQuantity: number;
         orders: Array<{ orderId: string; customer: string; quantity: number }>;
       }
     > = {};
 
-    readyItems.forEach((i) => {
-      const key = `${i.brand}|${i.name}|${i.size}`.toLowerCase();
+    readyItems.forEach((item) => {
+      const key = `${item.brand}:::${item.name}:::${item.size}`.toLowerCase();
       if (!grouped[key]) {
         grouped[key] = {
-          brand: i.brand,
-          name: i.name,
-          size: i.size,
-          inventoryQuantity: i.inventoryQuantity,
-          totalReadyQuantity: 0,
+          brand: item.brand,
+          name: item.name,
+          size: item.size,
+          inventoryQuantity: item.inventoryQuantity,
           orders: [],
         };
       }
-      grouped[key].totalReadyQuantity += i.quantity;
       grouped[key].orders.push({
-        orderId: i.orderId,
-        customer: i.customer,
-        quantity: i.quantity,
+        orderId: item.orderId,
+        customer: item.customer,
+        quantity: item.quantity,
       });
     });
 
     const conflictList: StockConflict[] = [];
-
-    Object.entries(grouped).forEach(([key, data]) => {
-      const hasMultipleOrders = data.orders.length > 1;
+    Object.entries(grouped).forEach(([key, group]) => {
+      const totalReadyQuantity = group.orders.reduce((sum, o) => sum + o.quantity, 0);
+      const isMultiOrder = group.orders.length > 1;
       const exceedsInventory =
-        data.inventoryQuantity !== null && data.totalReadyQuantity > data.inventoryQuantity;
+        group.inventoryQuantity !== null && totalReadyQuantity > group.inventoryQuantity;
 
-      if (hasMultipleOrders || exceedsInventory) {
+      if (isMultiOrder || exceedsInventory) {
         conflictList.push({
           key,
-          brand: data.brand,
-          name: data.name,
-          size: data.size,
-          inventoryQuantity: data.inventoryQuantity,
-          totalReadyQuantity: data.totalReadyQuantity,
-          orders: data.orders,
-          reason: exceedsInventory ? 'inventory_exceeded' : 'multiple_orders',
+          brand: group.brand,
+          name: group.name,
+          size: group.size,
+          inventoryQuantity: group.inventoryQuantity,
+          totalReadyQuantity,
+          orders: group.orders.map((o) => ({
+            orderId: o.orderId,
+            customer: o.customer,
+            quantity: o.quantity,
+          })),
+          reason: isMultiOrder ? 'multiple_orders' : 'inventory_exceeded',
         });
       }
     });
@@ -191,67 +230,65 @@ export default function OrderManifestApp() {
     return conflictList;
   }, [allItems]);
 
-  // Handlers for importing Shopify orders
-  const handleImportOrders = (incoming: ShopifyOrderSummary[]) => {
-    const newManifestOrders: ManifestOrder[] = incoming.map((o) => ({
-      id: o.name,
-      shopifyOrderId: o.id,
-      source: 'shopify',
-      customer: o.customer,
-      customerEmail: o.customerEmail,
-      orderDate: o.createdAt,
-      createdAt: o.createdAt,
-      fulfillmentStatus: o.fulfillmentStatus,
-      items: o.items.map((it) => ({
-        id: Math.random().toString(36).substring(2, 9),
-        shopifyLineItemId: it.id,
+  // Convert Shopify Order to ManifestOrder
+  const handleImportOrders = (imported: ShopifyOrderSummary[]) => {
+    const existingIds = new Set(orders.map((o) => o.id));
+    const newOrders: ManifestOrder[] = [];
+
+    imported.forEach((summary) => {
+      if (existingIds.has(summary.name)) return;
+
+      const manifestItems: ManifestItem[] = summary.items.map((it, idx) => ({
+        id: `${summary.name}-${idx}-${Date.now()}`,
         name: it.name,
-        brand: it.brand,
-        brandColor: it.brandColor,
-        size: it.size,
-        sku: it.sku,
-        quantity: it.quantity,
+        brand: it.brand || 'Essentials EG',
+        brandColor: it.brandColor || '#4F46E5',
+        size: it.size || 'M',
+        color: (it as any).color || undefined,
+        sku: it.sku || '',
+        quantity: it.quantity || 1,
+        status: 'pending' as ItemStatus,
+        note: '',
         inventoryQuantity: it.inventoryQuantity,
         suggestReady: it.suggestReady,
-        status: 'pending',
-        note: '',
-        variantId: it.variantId,
-        productId: it.productId,
-      })),
-    }));
+      }));
 
-    setOrders((prev) => {
-      const existingIds = new Set(prev.map((ord) => ord.id.toLowerCase()));
-      const unique = newManifestOrders.filter((ord) => !existingIds.has(ord.id.toLowerCase()));
-      return [...prev, ...unique];
+      newOrders.push({
+        id: summary.name,
+        customer: summary.customer || 'Unknown Customer',
+        customerPhone: (summary as any).customerPhone || undefined,
+        customerEmail: summary.customerEmail,
+        orderDate: summary.createdAt,
+        fulfillmentStatus: summary.fulfillmentStatus,
+        tags: summary.tags || undefined,
+        items: manifestItems,
+        source: 'shopify',
+      });
     });
 
+    if (newOrders.length > 0) {
+      setOrders((prev) => [...prev, ...newOrders]);
+      addToast(`Imported ${newOrders.length} order(s) successfully`);
+      setTimeout(() => {
+        if (boardRef.current) {
+          boardRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  };
+
+  // Convert and add manually created order
+  const handleImportManualOrder = (newOrder: ManifestOrder) => {
+    setOrders((prev) => [newOrder, ...prev]);
+    addToast(`Manual order ${newOrder.id} created & imported`);
     setTimeout(() => {
-      const firstTicket = document.querySelector('.ticket');
-      if (firstTicket) {
-        firstTicket.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (boardRef.current) {
+        boardRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }, 100);
   };
 
-  // Handler for importing manually created order
-  const handleImportManualOrder = (createdOrder: ManifestOrder) => {
-    setOrders((prev) => {
-      // Prevent duplicates
-      if (prev.some((o) => o.id.toLowerCase() === createdOrder.id.toLowerCase())) {
-        return prev;
-      }
-      return [createdOrder, ...prev];
-    });
-
-    setTimeout(() => {
-      const firstTicket = document.querySelector('.ticket');
-      if (firstTicket) {
-        firstTicket.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 100);
-  };
-
+  // Item Actions
   const handleSetStatus = (orderId: string, itemId: string, status: ItemStatus) => {
     setOrders((prev) =>
       prev.map((o) => {
@@ -265,7 +302,7 @@ export default function OrderManifestApp() {
   };
 
   const handleCycleStatus = (orderId: string, itemId: string) => {
-    const seq: ItemStatus[] = ['pending', 'ready', 'incoming', 'missing'];
+    const cycleOrder: ItemStatus[] = ['pending', 'ready', 'incoming', 'missing'];
     setOrders((prev) =>
       prev.map((o) => {
         if (o.id !== orderId) return o;
@@ -273,8 +310,9 @@ export default function OrderManifestApp() {
           ...o,
           items: o.items.map((i) => {
             if (i.id !== itemId) return i;
-            const nextIdx = (seq.indexOf(i.status) + 1) % seq.length;
-            return { ...i, status: seq[nextIdx] };
+            const currentIdx = cycleOrder.indexOf(i.status);
+            const nextIdx = (currentIdx + 1) % cycleOrder.length;
+            return { ...i, status: cycleOrder[nextIdx] };
           }),
         };
       })
@@ -315,15 +353,11 @@ export default function OrderManifestApp() {
   };
 
   const handleGenerateReport = async () => {
-    if (orders.length === 0) {
-      alert('No orders in the current batch to generate a report.');
-      return;
-    }
+    if (orders.length === 0) return;
 
     setSavingReport(true);
 
     try {
-      // 1. Compute brand breakdown
       const brandBreakdown: ReportSnapshot['brandBreakdown'] = {};
       allItems.forEach((i) => {
         if (!brandBreakdown[i.brand]) {
@@ -340,7 +374,6 @@ export default function OrderManifestApp() {
         brandBreakdown[i.brand][i.status] += i.quantity;
       });
 
-      // 2. Compute ready order IDs
       const readyOrderIds = orders
         .filter((o) => o.items.every((i) => i.status === 'ready'))
         .map((o) => o.id);
@@ -358,7 +391,6 @@ export default function OrderManifestApp() {
         brandBreakdown,
       };
 
-      // 3. Persist to Postgres database
       const res = await fetch('/api/reports', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -375,11 +407,11 @@ export default function OrderManifestApp() {
         throw new Error(data.error || 'Failed to save report to database');
       }
 
-      // 4. On confirmed save, display report, clear active board, update archive
       setCurrentReport(snapshot);
       setOrders([]);
       localStorage.removeItem(LOCAL_STORAGE_BATCH_KEY);
       refreshArchiveCount();
+      addToast('Shipment report saved successfully');
 
       setTimeout(() => {
         if (reportRef.current) {
@@ -387,14 +419,13 @@ export default function OrderManifestApp() {
         }
       }, 100);
     } catch (err: any) {
-      alert(`Could not save report: ${err.message}. Your batch was NOT cleared.`);
+      addToast(err.message || 'Could not save report', 'error');
     } finally {
       setSavingReport(false);
     }
   };
 
   const handleEditBatch = (report: ReportSnapshot) => {
-    // Restore orders, reset statuses to pending, keep notes intact
     const restoredOrders: ManifestOrder[] = JSON.parse(JSON.stringify(report.orders));
     restoredOrders.forEach((o) => {
       o.items.forEach((i) => {
@@ -405,8 +436,9 @@ export default function OrderManifestApp() {
     setOrders(restoredOrders);
     setCurrentReport(null);
     setReportStatusMessage(
-      `Editing batch from ${new Date(report.createdAt).toLocaleTimeString()} — all stamps reset to pending, notes preserved.`
+      `Editing batch from ${new Date(report.createdAt).toLocaleTimeString()} — all stamps reset to pending.`
     );
+    addToast('Restored batch to active board');
 
     setTimeout(() => {
       if (boardRef.current) {
@@ -427,19 +459,42 @@ export default function OrderManifestApp() {
           setCurrentReport(null);
         }
         refreshArchiveCount();
+        addToast('Report deleted successfully');
       }
     } catch {
-      alert('Failed to delete report');
+      addToast('Failed to delete report', 'error');
     }
   };
 
-  // Filter and sort orders using multi-criteria pipeline
   const visibleOrders = useMemo(() => {
     return filterAndSortOrders(orders, filters);
   }, [orders, filters]);
 
   return (
-    <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 pb-28">
+    <div className="max-w-[1100px] mx-auto px-4 sm:px-6 py-6 pb-36">
+      {/* Toast Notification Container (Top-Right) */}
+      <div className="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none">
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            className={`pointer-events-auto px-4 py-2.5 rounded-lg border text-xs font-medium shadow-md transition-all flex items-center gap-2 ${
+              toast.type === 'error'
+                ? 'bg-[#FEE2E2] text-[#991B1B] border-[#FECACA] dark:bg-[#7F1D1D] dark:text-[#FECACA] dark:border-[#991B1B]'
+                : toast.type === 'info'
+                ? 'bg-[#DBEAFE] text-[#1E40AF] border-[#BFDBFE] dark:bg-[#1E3A8A] dark:text-[#BFDBFE] dark:border-[#1E40AF]'
+                : 'bg-[#DCFCE7] text-[#166534] border-[#BBF7D0] dark:bg-[#14532D] dark:text-[#BBF7D0] dark:border-[#166534]'
+            }`}
+          >
+            {toast.type === 'error' ? (
+              <AlertCircle className="w-4 h-4 shrink-0" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+            )}
+            <span>{toast.message}</span>
+          </div>
+        ))}
+      </div>
+
       {/* Top Header */}
       <TopBar
         counts={counts}
@@ -453,15 +508,25 @@ export default function OrderManifestApp() {
         onOpenManualOrder={() => setIsManualOrderOpen(true)}
       />
 
-      {/* Info Banner */}
-      <div className="text-xs text-stone-300 bg-ink-night-2 border border-ink-rule rounded-xl p-3 sm:p-3.5 mb-6 leading-relaxed flex items-center justify-between flex-wrap gap-2 shadow-sm">
-        <div className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-          <div>
-            <b className="text-cream font-bold">Production Ops Platform:</b> Connected live to Essentials EG Shopify Admin API & internal PostgreSQL database. Search orders, create manual entries, and allocate stock seamlessly.
+      {/* Dismissible Info Banner */}
+      {!hideBanner && (
+        <div className="text-xs text-text-muted bg-surface border border-border rounded-lg px-3.5 py-2.5 mb-6 flex items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+            <span>
+              <strong className="text-text font-semibold">Production Ops Platform:</strong> Connected live to Essentials EG Shopify Admin API & internal PostgreSQL database.
+            </span>
           </div>
+          <button
+            type="button"
+            onClick={dismissBanner}
+            className="text-text-muted hover:text-text p-0.5 rounded cursor-pointer"
+            title="Dismiss note"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
-      </div>
+      )}
 
       {/* Import Section */}
       <ImportSection
@@ -483,34 +548,44 @@ export default function OrderManifestApp() {
           />
         )}
 
+        {/* Empty States */}
         {orders.length === 0 ? (
-          <div className="text-center py-14 px-4 text-stone-600 dark:text-stone-400 text-xs sm:text-sm font-medium border border-dashed border-ink-rule rounded-xl mb-8 bg-ink-night-2/40">
-            No orders in active manifest &mdash; click{' '}
+          <div className="card-clean text-center py-16 px-4 mb-8">
+            <div className="w-12 h-12 rounded-full bg-bg border border-border flex items-center justify-center text-text-muted mx-auto mb-3">
+              <PackageOpen className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-semibold text-text mb-1">No orders in active manifest</h3>
+            <p className="text-xs text-text-muted mb-4 max-w-sm mx-auto">
+              Browse and import live orders above or create a manual order to start stamping.
+            </p>
             <button
               type="button"
               onClick={() => setIsManualOrderOpen(true)}
-              className="text-purple-600 dark:text-purple-400 font-bold underline hover:opacity-80 cursor-pointer"
+              className="h-10 px-4 bg-accent hover:bg-accent-hover text-white rounded-lg text-sm font-medium transition cursor-pointer inline-flex items-center gap-1.5 shadow-sm"
             >
-              Create Manual Order
-            </button>{' '}
-            or browse/paste Shopify orders above to populate the board.
+              <Plus className="w-4 h-4" />
+              <span>Create Manual Order</span>
+            </button>
           </div>
         ) : visibleOrders.length === 0 ? (
-          <div className="text-center py-12 px-4 border border-dashed border-ink-rule rounded-md mb-8 bg-ink-night-2">
-            <p className="text-sm font-semibold text-cream mb-1">No orders match your filter criteria</p>
-            <p className="text-xs text-stone-400 mb-4">
+          <div className="card-clean text-center py-16 px-4 mb-8">
+            <div className="w-12 h-12 rounded-full bg-bg border border-border flex items-center justify-center text-text-muted mx-auto mb-3">
+              <SearchX className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-semibold text-text mb-1">No orders match your filter criteria</h3>
+            <p className="text-xs text-text-muted mb-4 max-w-sm mx-auto">
               Try adjusting your search terms, date range, or status filters.
             </p>
             <button
               type="button"
               onClick={() => setFilters(INITIAL_FILTER_STATE)}
-              className="font-mono text-xs px-3.5 py-1.5 rounded bg-purple-600 hover:bg-purple-500 text-white transition cursor-pointer font-semibold shadow-sm"
+              className="h-10 px-4 bg-surface hover:bg-slate-50 dark:hover:bg-slate-800 text-text border border-border rounded-lg text-sm font-medium transition cursor-pointer inline-flex items-center gap-1.5 shadow-sm"
             >
-              Clear All Filters
+              <span>Clear All Filters</span>
             </button>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {visibleOrders.map((order) => {
               const activeFilterStatus = filters.status !== 'all' ? (filters.status as ItemStatus) : null;
               const filteredItems = activeFilterStatus
@@ -536,13 +611,15 @@ export default function OrderManifestApp() {
         )}
       </div>
 
-      {/* Bottom Sticky Action Bar */}
+      {/* Bottom Sticky Action Bar: Progress on left, Saved Reports & Generate on right */}
       <ShipmentReportBar
         statusMessage={reportStatusMessage}
         savedReportsCount={savedReportsCount}
         onOpenArchive={() => setIsArchiveOpen(true)}
         onGenerateReport={handleGenerateReport}
         savingReport={savingReport}
+        totalItems={totalItemsCount}
+        stampedItems={stampedItemsCount}
       />
 
       {/* Generated Report View */}

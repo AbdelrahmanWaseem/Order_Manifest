@@ -21,7 +21,7 @@ export default function ReportView({ report, onEditBatch, onDeleteReport }: Repo
         key: 'incomplete',
         label: 'Needs review',
         border: 'border-l-amber-500',
-        badge: 'bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30',
+        badge: 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#451A03] dark:text-[#FDE68A]',
       };
     }
     if (statuses.every((s) => s === 'ready')) {
@@ -29,22 +29,22 @@ export default function ReportView({ report, onEditBatch, onDeleteReport }: Repo
         key: 'ready',
         label: 'Ship now',
         border: 'border-l-emerald-500',
-        badge: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30',
+        badge: 'bg-[#DCFCE7] text-[#166534] dark:bg-[#14532D] dark:text-[#BBF7D0]',
       };
     }
     if (statuses.includes('missing')) {
       return {
         key: 'missing',
         label: 'Missing items',
-        border: 'border-l-rose-500',
-        badge: 'bg-rose-500/15 text-rose-600 dark:text-rose-300 border border-rose-500/30',
+        border: 'border-l-red-500',
+        badge: 'bg-[#FEE2E2] text-[#991B1B] dark:bg-[#7F1D1D] dark:text-[#FECACA]',
       };
     }
     return {
       key: 'incoming',
       label: 'Waiting on stock',
       border: 'border-l-blue-500',
-      badge: 'bg-blue-500/15 text-blue-600 dark:text-blue-300 border border-blue-500/30',
+      badge: 'bg-[#DBEAFE] text-[#1E40AF] dark:bg-[#1E3A8A] dark:text-[#BFDBFE]',
     };
   };
 
@@ -97,61 +97,61 @@ export default function ReportView({ report, onEditBatch, onDeleteReport }: Repo
   };
 
   const pillClassMap: Record<string, string> = {
-    pending: 'bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30',
-    ready: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30',
-    incoming: 'bg-blue-500/15 text-blue-600 dark:text-blue-300 border border-blue-500/30',
-    missing: 'bg-rose-500/15 text-rose-600 dark:text-rose-300 border border-rose-500/30',
+    pending: 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#451A03] dark:text-[#FDE68A]',
+    ready: 'bg-[#DCFCE7] text-[#166534] dark:bg-[#14532D] dark:text-[#BBF7D0]',
+    incoming: 'bg-[#DBEAFE] text-[#1E40AF] dark:bg-[#1E3A8A] dark:text-[#BFDBFE]',
+    missing: 'bg-[#FEE2E2] text-[#991B1B] dark:bg-[#7F1D1D] dark:text-[#FECACA]',
   };
 
   return (
-    <div className="report-doc mt-8 bg-ink-night-2 text-cream rounded-2xl p-6 sm:p-8 shadow-xl border border-ink-rule">
+    <div className="report-doc mt-8 bg-surface text-text rounded-lg p-6 sm:p-8 shadow-sm border border-border">
       {/* Report Head */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end border-b border-ink-rule pb-4 mb-6 gap-3">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end border-b border-border pb-4 mb-6 gap-3">
         <div>
-          <div className="font-mono text-xs font-black tracking-widest uppercase text-ink-soft mb-1">
-            Essentials EG — Ops
+          <div className="text-xs font-semibold text-text-muted mb-1">
+            Essentials EG &middot; Operations
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-cream">Shipment Report</h2>
+          <h2 className="text-2xl font-semibold tracking-tight text-text">Shipment Report</h2>
         </div>
-        <div className="font-mono text-xs text-ink-soft sm:text-right">
-          <div className="font-medium">{new Date(report.createdAt).toLocaleString()}</div>
-          <div className="font-bold text-cream mt-0.5 text-sm">
+        <div className="text-xs text-text-muted sm:text-right">
+          <div>{new Date(report.createdAt).toLocaleString()}</div>
+          <div className="font-semibold text-text mt-0.5 text-sm tabular-nums">
             {report.orderCount} order(s) &middot; {report.itemCount} item(s)
           </div>
         </div>
       </div>
 
-      {/* Summary Grid - Eye comfortable frosted cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-7">
-        <div className="bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-300 p-3.5 rounded-xl shadow-sm">
-          <div className="font-mono text-2xl font-bold leading-none">{report.counts.ready}</div>
-          <div className="text-[11px] uppercase tracking-wider font-semibold opacity-90 mt-1">
+      {/* Summary Grid - Eye comfortable soft tints */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div className="bg-[#DCFCE7] text-[#166534] dark:bg-[#14532D] dark:text-[#BBF7D0] p-4 rounded-lg">
+          <div className="text-2xl font-bold leading-none tabular-nums">{report.counts.ready}</div>
+          <div className="text-xs font-medium opacity-90 mt-1.5">
             Ready to ship
           </div>
         </div>
-        <div className="bg-blue-500/10 border border-blue-500/25 text-blue-600 dark:text-blue-300 p-3.5 rounded-xl shadow-sm">
-          <div className="font-mono text-2xl font-bold leading-none">{report.counts.incoming}</div>
-          <div className="text-[11px] uppercase tracking-wider font-semibold opacity-90 mt-1">
+        <div className="bg-[#DBEAFE] text-[#1E40AF] dark:bg-[#1E3A8A] dark:text-[#BFDBFE] p-4 rounded-lg">
+          <div className="text-2xl font-bold leading-none tabular-nums">{report.counts.incoming}</div>
+          <div className="text-xs font-medium opacity-90 mt-1.5">
             Incoming
           </div>
         </div>
-        <div className="bg-rose-500/10 border border-rose-500/25 text-rose-600 dark:text-rose-300 p-3.5 rounded-xl shadow-sm">
-          <div className="font-mono text-2xl font-bold leading-none">{report.counts.missing}</div>
-          <div className="text-[11px] uppercase tracking-wider font-semibold opacity-90 mt-1">
+        <div className="bg-[#FEE2E2] text-[#991B1B] dark:bg-[#7F1D1D] dark:text-[#FECACA] p-4 rounded-lg">
+          <div className="text-2xl font-bold leading-none tabular-nums">{report.counts.missing}</div>
+          <div className="text-xs font-medium opacity-90 mt-1.5">
             Missing
           </div>
         </div>
-        <div className="bg-amber-500/10 border border-amber-500/25 text-amber-600 dark:text-amber-300 p-3.5 rounded-xl shadow-sm">
-          <div className="font-mono text-2xl font-bold leading-none">{report.counts.pending}</div>
-          <div className="text-[11px] uppercase tracking-wider font-semibold opacity-90 mt-1">
+        <div className="bg-[#FEF3C7] text-[#92400E] dark:bg-[#451A03] dark:text-[#FDE68A] p-4 rounded-lg">
+          <div className="text-2xl font-bold leading-none tabular-nums">{report.counts.pending}</div>
+          <div className="text-xs font-medium opacity-90 mt-1.5">
             Pending
           </div>
         </div>
       </div>
 
       {/* Orders Section */}
-      <div className="font-mono text-xs uppercase tracking-wider text-ink-soft mb-3 font-semibold">
-        Orders
+      <div className="text-xs font-semibold text-text-muted mb-3">
+        Orders ({report.orders.length})
       </div>
       <div className="space-y-3 mb-8">
         {report.orders.map((order) => {
@@ -163,19 +163,19 @@ export default function ReportView({ report, onEditBatch, onDeleteReport }: Repo
               {order.items.map((item) => (
                 <div key={item.id} className="flex items-center gap-2 text-xs flex-wrap py-0.5">
                   <span
-                    className={`font-mono text-[9.5px] font-bold uppercase px-2 py-0.5 rounded-md min-w-[65px] text-center ${
+                    className={`text-[11px] font-medium px-2 py-0.5 rounded min-w-[65px] text-center ${
                       pillClassMap[item.status]
                     }`}
                   >
                     {item.status}
                   </span>
-                  <span className="font-semibold text-cream">{item.name}</span>
-                  <span className="font-mono text-[11px] text-ink-soft">
+                  <span className="font-semibold text-text">{item.name}</span>
+                  <span className="text-xs text-text-muted">
                     {item.brand} &middot; sz {item.size} &middot; {item.sku}
                     {item.quantity > 1 && ` (x${item.quantity})`}
                   </span>
                   {item.note && (
-                    <span className="text-blue-400 italic text-xs">
+                    <span className="text-blue-600 dark:text-blue-400 italic text-xs">
                       &mdash; {item.note}
                     </span>
                   )}
@@ -188,23 +188,23 @@ export default function ReportView({ report, onEditBatch, onDeleteReport }: Repo
             return (
               <details
                 key={order.id}
-                className="order-card border border-ink-rule border-l-[4px] border-l-emerald-500 rounded-xl bg-ink-night/50 transition-colors"
+                className="border border-border border-l-4 border-l-emerald-500 rounded-lg bg-surface transition-colors"
               >
                 <summary className="cursor-pointer p-3 flex items-center justify-between gap-2 select-none">
-                  <div className="flex items-center gap-2 font-mono text-xs flex-wrap">
-                    <span className="font-bold text-sm text-cream">{order.id}</span>
-                    <span className="text-ink-soft">&middot; {order.customer}</span>
+                  <div className="flex items-center gap-2 text-xs flex-wrap">
+                    <span className="font-semibold text-sm text-text tabular-nums">{order.id}</span>
+                    <span className="text-text-muted" dir="auto">&middot; {order.customer}</span>
                     {order.fulfillmentStatus && (
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-ink-night-3 text-ink-soft border border-ink-rule font-medium">
+                      <span className="text-[11px] px-1.5 py-0.5 rounded bg-bg text-text-muted border border-border font-medium">
                         {order.fulfillmentStatus.toUpperCase() === 'FULFILLED' ? 'Fulfilled' : order.fulfillmentStatus.toUpperCase().includes('PARTIAL') ? 'Partial' : 'Unfulfilled'}
                       </span>
                     )}
                   </div>
-                  <span className="font-mono text-[10.5px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border-emerald-500/30">
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[#DCFCE7] text-[#166534] dark:bg-[#14532D] dark:text-[#BBF7D0]">
                     {state.label}
                   </span>
                 </summary>
-                <div className="p-3 pt-0 border-t border-ink-rule/60">{cardContent}</div>
+                <div className="p-3 pt-0 border-t border-border/60">{cardContent}</div>
               </details>
             );
           }
@@ -212,20 +212,20 @@ export default function ReportView({ report, onEditBatch, onDeleteReport }: Repo
           return (
             <div
               key={order.id}
-              className={`order-card border border-ink-rule border-l-[4px] ${state.border} rounded-xl p-3 bg-ink-night/50`}
+              className={`border border-border border-l-4 ${state.border} rounded-lg p-3 bg-surface`}
             >
-              <div className="flex items-center justify-between gap-2 border-b border-ink-rule/60 pb-2">
-                <div className="flex items-center gap-2 font-mono text-xs flex-wrap">
-                  <span className="font-bold text-sm text-cream">{order.id}</span>
-                  <span className="text-ink-soft">&middot; {order.customer}</span>
+              <div className="flex items-center justify-between gap-2 border-b border-border/60 pb-2">
+                <div className="flex items-center gap-2 text-xs flex-wrap">
+                  <span className="font-semibold text-sm text-text tabular-nums">{order.id}</span>
+                  <span className="text-text-muted" dir="auto">&middot; {order.customer}</span>
                   {order.fulfillmentStatus && (
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-ink-night-3 text-ink-soft border border-ink-rule font-medium">
+                    <span className="text-[11px] px-1.5 py-0.5 rounded bg-bg text-text-muted border border-border font-medium">
                       {order.fulfillmentStatus.toUpperCase() === 'FULFILLED' ? 'Fulfilled' : order.fulfillmentStatus.toUpperCase().includes('PARTIAL') ? 'Partial' : 'Unfulfilled'}
                     </span>
                   )}
                 </div>
                 <span
-                  className={`font-mono text-[10.5px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${state.badge}`}
+                  className={`text-xs font-semibold px-2 py-0.5 rounded ${state.badge}`}
                 >
                   {state.label}
                 </span>
@@ -237,36 +237,36 @@ export default function ReportView({ report, onEditBatch, onDeleteReport }: Repo
       </div>
 
       {/* Brand Breakdown Table */}
-      <div className="font-mono text-xs uppercase tracking-wider text-ink-soft mb-3 font-semibold">
-        Brand breakdown
+      <div className="text-xs font-semibold text-text-muted mb-3">
+        Brand Breakdown
       </div>
-      <div className="overflow-x-auto mb-8 border border-ink-rule rounded-xl bg-ink-night/30">
+      <div className="overflow-x-auto mb-8 border border-border rounded-lg bg-surface">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="border-b border-ink-rule font-mono text-[10.5px] uppercase tracking-wider text-ink-soft bg-ink-night/50">
+            <tr className="border-b border-border text-xs font-semibold text-text-muted bg-bg">
               <th className="py-2.5 px-3">Brand</th>
-              <th className="py-2.5 px-3">Items</th>
-              <th className="py-2.5 px-3">Ready</th>
-              <th className="py-2.5 px-3">Incoming</th>
-              <th className="py-2.5 px-3">Missing</th>
-              <th className="py-2.5 px-3">Pending</th>
+              <th className="py-2.5 px-3 text-right">Items</th>
+              <th className="py-2.5 px-3 text-right">Ready</th>
+              <th className="py-2.5 px-3 text-right">Incoming</th>
+              <th className="py-2.5 px-3 text-right">Missing</th>
+              <th className="py-2.5 px-3 text-right">Pending</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-ink-rule/40">
+          <tbody className="divide-y divide-border">
             {Object.entries(report.brandBreakdown || {}).map(([brand, b]) => (
-              <tr key={brand} className="hover:bg-ink-night-3/30 transition-colors">
-                <td className="py-2.5 px-3 font-medium flex items-center gap-2 text-cream">
+              <tr key={brand} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                <td className="py-2.5 px-3 font-medium flex items-center gap-2 text-text">
                   <span
-                    className="w-2.5 h-2.5 rounded-full inline-block shrink-0 shadow-sm"
+                    className="w-2.5 h-2.5 rounded-full inline-block shrink-0 shadow-xs"
                     style={{ backgroundColor: b.color }}
                   />
                   <span>{brand}</span>
                 </td>
-                <td className="py-2.5 px-3 font-mono font-bold text-cream">{b.total}</td>
-                <td className="py-2.5 px-3 font-mono text-emerald-600 dark:text-emerald-400 font-semibold">{b.ready}</td>
-                <td className="py-2.5 px-3 font-mono text-blue-600 dark:text-blue-400 font-semibold">{b.incoming}</td>
-                <td className="py-2.5 px-3 font-mono text-rose-600 dark:text-rose-400 font-semibold">{b.missing}</td>
-                <td className="py-2.5 px-3 font-mono text-amber-600 dark:text-amber-400 font-semibold">{b.pending}</td>
+                <td className="py-2.5 px-3 font-semibold text-text text-right tabular-nums">{b.total}</td>
+                <td className="py-2.5 px-3 text-emerald-600 dark:text-emerald-400 font-semibold text-right tabular-nums">{b.ready}</td>
+                <td className="py-2.5 px-3 text-blue-600 dark:text-blue-400 font-semibold text-right tabular-nums">{b.incoming}</td>
+                <td className="py-2.5 px-3 text-red-600 dark:text-red-400 font-semibold text-right tabular-nums">{b.missing}</td>
+                <td className="py-2.5 px-3 text-amber-600 dark:text-amber-400 font-semibold text-right tabular-nums">{b.pending}</td>
               </tr>
             ))}
           </tbody>
@@ -274,7 +274,7 @@ export default function ReportView({ report, onEditBatch, onDeleteReport }: Repo
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-wrap items-center justify-end gap-2.5 pt-4 border-t border-ink-rule no-print">
+      <div className="flex flex-wrap items-center justify-end gap-2.5 pt-4 border-t border-border no-print">
         <button
           type="button"
           onClick={() => {
@@ -282,43 +282,43 @@ export default function ReportView({ report, onEditBatch, onDeleteReport }: Repo
               onDeleteReport(report.id);
             }
           }}
-          className="bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-500 dark:text-rose-400 font-bold text-xs px-4 py-2.5 rounded-xl transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 mr-auto shadow-sm"
+          className="h-10 px-4 bg-surface hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 dark:text-red-400 border border-border hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition cursor-pointer flex items-center gap-1.5 mr-auto shadow-sm"
         >
-          <Trash2 className="w-3.5 h-3.5" />
+          <Trash2 className="w-4 h-4" />
           <span>Delete report</span>
         </button>
 
         <button
           type="button"
           onClick={handleCopyReadyOrders}
-          className="bg-ink-night hover:bg-ink-night-3 border border-ink-rule text-cream font-bold text-xs px-4 py-2.5 rounded-xl transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 shadow-sm"
+          className="h-10 px-4 bg-surface hover:bg-slate-50 dark:hover:bg-slate-800 border border-border text-text rounded-lg text-sm font-medium transition cursor-pointer flex items-center gap-1.5 shadow-sm"
         >
-          {copied ? <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[2.5]" /> : <Copy className="w-3.5 h-3.5 text-stone-400" />}
+          {copied ? <Check className="w-4 h-4 text-emerald-600 stroke-[2.25]" /> : <Copy className="w-4 h-4 text-text-muted" />}
           <span>{copied ? 'Copied to clipboard!' : 'Copy ready order #s'}</span>
         </button>
 
         <button
           type="button"
           onClick={() => onEditBatch(report)}
-          className="bg-ink-night hover:bg-ink-night-3 border border-ink-rule text-cream font-bold text-xs px-4 py-2.5 rounded-xl transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 shadow-sm"
+          className="h-10 px-4 bg-surface hover:bg-slate-50 dark:hover:bg-slate-800 border border-border text-text rounded-lg text-sm font-medium transition cursor-pointer flex items-center gap-1.5 shadow-sm"
         >
-          <Edit className="w-3.5 h-3.5 text-stone-400" />
+          <Edit className="w-4 h-4 text-text-muted" />
           <span>Edit this batch</span>
         </button>
 
         <button
           type="button"
           onClick={handleExportCSV}
-          className="bg-ink-night hover:bg-ink-night-3 border border-ink-rule text-cream font-bold text-xs px-4 py-2.5 rounded-xl transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 shadow-sm"
+          className="h-10 px-4 bg-surface hover:bg-slate-50 dark:hover:bg-slate-800 border border-border text-text rounded-lg text-sm font-medium transition cursor-pointer flex items-center gap-1.5 shadow-sm"
         >
-          <Download className="w-3.5 h-3.5 text-stone-400" />
+          <Download className="w-4 h-4 text-text-muted" />
           <span>Export CSV</span>
         </button>
 
         <button
           type="button"
           onClick={() => window.print()}
-          className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl transition-all active:scale-95 cursor-pointer flex items-center gap-2 shadow-md shadow-emerald-950/40 border border-emerald-500/40"
+          className="h-10 px-5 bg-accent hover:bg-accent-hover text-white rounded-lg text-sm font-semibold transition cursor-pointer flex items-center gap-2 shadow-sm"
         >
           <Printer className="w-4 h-4 text-white" />
           <span className="text-white">Print / save as PDF</span>

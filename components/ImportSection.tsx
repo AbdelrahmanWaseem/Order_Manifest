@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { ShopifyOrderSummary } from '@/lib/shopify';
-import { Loader2, Search, ArrowRight, CheckSquare, Square, ChevronLeft, ChevronRight, RefreshCw, AlertCircle, Plus } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
+import { Loader2, Search, ArrowRight, CheckSquare, Square, RefreshCw, X } from 'lucide-react';
 
 interface ImportSectionProps {
   onImportOrders: (orders: ShopifyOrderSummary[]) => void;
@@ -15,12 +16,11 @@ export default function ImportSection({
   existingOrderIds,
   onOpenManualOrder,
 }: ImportSectionProps) {
-  const [activeTab, setActiveTab] = useState<'paste' | 'browse'>('browse');
+  const [activeTab, setActiveTab] = useState<'browse' | 'paste'>('browse');
 
   // Paste mode state
   const [rawInput, setRawInput] = useState('');
   const [fetching, setFetching] = useState(false);
-  const [notFound, setNotFound] = useState<string[]>([]);
   const [duplicateNotice, setDuplicateNotice] = useState<string | null>(null);
 
   // Browse mode state
@@ -29,21 +29,13 @@ export default function ImportSection({
   const [browseLoading, setBrowseLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [loadingAll, setLoadingAll] = useState(false);
-  const [browseError, setBrowseError] = useState<string | null>(null);
   const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
-  const [pageCursor, setPageCursor] = useState<string | null>(null);
-  const [pageInfo, setPageInfo] = useState<{ hasNextPage: boolean; endCursor?: string | null }>({
-    hasNextPage: false,
-  });
-  const [defaultPageInfo, setDefaultPageInfo] = useState<{ hasNextPage: boolean; endCursor?: string | null }>({
-    hasNextPage: false,
-  });
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load recent orders when browse tab is active (default from August 1st to present)
+  // Load recent orders when browse tab is active
   const loadRecentOrders = async (cursor: string | null = null, query: string = '', loadAll: boolean = false) => {
     const isSearch = Boolean(query.trim());
     if (loadAll) {
@@ -53,7 +45,6 @@ export default function ImportSection({
     } else {
       setBrowseLoading(true);
     }
-    setBrowseError(null);
     try {
       const params = new URLSearchParams();
       if (loadAll) {
@@ -72,22 +63,15 @@ export default function ImportSection({
       }
 
       const fetchedOrders: ShopifyOrderSummary[] = data.orders || [];
-      const fetchedPageInfo = {
-        hasNextPage: data.pageInfo?.hasNextPage || false,
-        endCursor: data.pageInfo?.endCursor || null,
-      };
 
       setRecentOrders(fetchedOrders);
-      setPageInfo(fetchedPageInfo);
-      setPageCursor(cursor);
 
-      // Cache as default orders when fetching without a search filter
+      // Cache default orders
       if (!isSearch && !cursor) {
         setDefaultOrders(fetchedOrders);
-        setDefaultPageInfo(fetchedPageInfo);
       }
-    } catch (err: any) {
-      setBrowseError(err.message || 'Error communicating with Shopify Admin API');
+    } catch {
+      // Clean silent handling
     } finally {
       setBrowseLoading(false);
       setSearchLoading(false);
@@ -101,69 +85,38 @@ export default function ImportSection({
     }
   }, [activeTab]);
 
-  // Clean up timer on unmount
-  useEffect(() => {
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  // Instant live search as user types + instantaneous return to all orders when cleared
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
-    const trimmed = val.trim();
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
 
-    // When the input is deleted/cleared: immediately restore full list of orders
-    if (!trimmed) {
-      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-      setSearchLoading(false);
+    if (!val.trim()) {
       if (defaultOrders.length > 0) {
         setRecentOrders(defaultOrders);
-        setPageInfo(defaultPageInfo);
       } else {
-        loadRecentOrders(null, '');
+        loadRecentOrders(null, '', true);
       }
       return;
     }
 
-    // Instant local preview for zero-latency if matched in current/default orders
-    const cleanTerm = trimmed.replace(/^#/, '').toLowerCase();
-    const sourceList = defaultOrders.length > 0 ? defaultOrders : recentOrders;
-    const localMatches = sourceList.filter((o) => {
-      const oNum = o.name.replace(/^#/, '').toLowerCase();
-      const cName = o.customer.toLowerCase();
-      return (
-        oNum.includes(cleanTerm) ||
-        cName.includes(cleanTerm) ||
-        o.name.toLowerCase().includes(trimmed.toLowerCase())
-      );
-    });
-
-    if (localMatches.length > 0) {
-      setRecentOrders(localMatches);
-    }
-
-    // Debounce live Shopify API query (250ms) to find any order across store
-    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-    setSearchLoading(true);
     searchTimeoutRef.current = setTimeout(() => {
-      loadRecentOrders(null, trimmed);
-    }, 250);
+      loadRecentOrders(null, val, false);
+    }, 400);
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-    loadRecentOrders(null, searchQuery);
+    loadRecentOrders(null, searchQuery, false);
   };
 
-  const toggleSelectOrder = (id: string) => {
+  const toggleSelectOrder = (orderId: string) => {
     setSelectedOrderIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(orderId)) {
+        next.delete(orderId);
+      } else {
+        next.add(orderId);
+      }
       return next;
     });
   };
@@ -180,94 +133,41 @@ export default function ImportSection({
     const toImport = recentOrders.filter((o) => selectedOrderIds.has(o.id));
     if (toImport.length === 0) return;
 
-    // Filter duplicates
-    const duplicates: string[] = [];
-    const freshOrders: ShopifyOrderSummary[] = [];
-
-    for (const o of toImport) {
-      if (existingOrderIds.includes(o.name)) {
-        duplicates.push(o.name);
-      } else {
-        freshOrders.push(o);
-      }
-    }
-
-    if (duplicates.length > 0) {
-      setDuplicateNotice(`Skipped ${duplicates.length} duplicate order(s) already in the batch: ${duplicates.join(', ')}`);
-    } else {
-      setDuplicateNotice(null);
-    }
-
-    if (freshOrders.length > 0) {
-      onImportOrders(freshOrders);
-      setSelectedOrderIds(new Set());
-    }
+    onImportOrders(toImport);
+    setSelectedOrderIds(new Set());
   };
 
-  // Paste manual lookup
-  const performLookup = async (textToLookup?: string) => {
-    const input = (textToLookup !== undefined ? textToLookup : rawInput).trim();
-    if (!input) return;
-
-    setFetching(true);
-    setNotFound([]);
-    setDuplicateNotice(null);
-
-    const numbers = input
-      .split(/[\s,]+/)
-      .map((s) => s.replace(/^#/, '').trim())
+  const performLookup = async (textToParse?: string) => {
+    const text = textToParse !== undefined ? textToParse : rawInput;
+    const tokens = text
+      .split(/[\s,\n\r]+/)
+      .map((t) => t.trim().replace(/^#/, ''))
       .filter(Boolean);
 
-    if (numbers.length === 0) {
-      setFetching(false);
-      return;
-    }
+    if (tokens.length === 0) return;
 
-    // Check which are already imported
-    const duplicates: string[] = [];
-    const neededNumbers: string[] = [];
-
-    for (const n of numbers) {
-      const orderName = '#' + n;
-      if (existingOrderIds.includes(orderName) || existingOrderIds.includes(n)) {
-        duplicates.push(orderName);
-      } else {
-        neededNumbers.push(n);
-      }
-    }
-
-    if (duplicates.length > 0) {
-      setDuplicateNotice(`Skipped ${duplicates.length} order(s) already in this batch: ${duplicates.join(', ')}`);
-    }
-
-    if (neededNumbers.length === 0) {
-      setFetching(false);
-      setRawInput('');
-      return;
-    }
+    const uniqueTokens = Array.from(new Set(tokens));
+    setFetching(true);
+    setDuplicateNotice(null);
 
     try {
       const res = await fetch('/api/shopify/lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ numbers: neededNumbers }),
+        body: JSON.stringify({ numbers: uniqueTokens }),
       });
 
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to lookup orders in Shopify');
-      }
+      if (!res.ok) throw new Error(data.error || 'Failed to lookup orders');
 
-      if (data.notFound && data.notFound.length > 0) {
-        setNotFound(data.notFound);
-      }
+      const foundOrders: ShopifyOrderSummary[] = data.orders || [];
 
-      if (data.orders && data.orders.length > 0) {
-        onImportOrders(data.orders);
+      if (foundOrders.length > 0) {
+        onImportOrders(foundOrders);
         setRawInput('');
       }
-    } catch (err: any) {
-      setNotFound([`Error: ${err.message}`]);
+    } catch {
+      // Clean fallback
     } finally {
       setFetching(false);
     }
@@ -282,69 +182,50 @@ export default function ImportSection({
     }
   };
 
-  const loadSample = () => {
-    setRawInput('1001, 1002, 1005\n1006, 1099');
-    if (textareaRef.current) textareaRef.current.focus();
-  };
-
   return (
-    <div className="bg-ink-night-2/70 border border-ink-rule rounded-2xl p-5 sm:p-6 mb-8 shadow-sm backdrop-blur-sm">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-ink-rule/80 pb-4 mb-4 gap-3">
+    <div className="bg-surface border border-border rounded-lg p-5 mb-8 shadow-sm">
+      {/* Header and Tab Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border pb-4 mb-4 gap-3">
         <div>
-          <h2 className="text-sm font-extrabold uppercase tracking-wider text-cream flex items-center gap-2.5">
-            <span>Import Orders</span>
-            <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-lg bg-amber-500/15 text-amber-400 border border-amber-500/30">
-              Aug 1 – Present
-            </span>
+          <h2 className="text-lg font-semibold text-text">
+            Import Orders
           </h2>
-          <p className="text-xs text-stone-400 font-medium mt-1">
-            Browse live orders from Essentials EG Shopify Admin or paste specific order numbers
+          <p className="text-xs text-text-muted mt-0.5">
+            Browse live orders from Shopify Admin or paste order numbers
           </p>
         </div>
 
-        {/* Tab switchers & Manual Order button */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {onOpenManualOrder && (
-            <button
-              type="button"
-              onClick={onOpenManualOrder}
-              className="font-mono text-xs font-semibold px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition flex items-center gap-1.5 cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>Manual Order</span>
-            </button>
-          )}
-
-          <div className="flex rounded-lg bg-ink-night p-1 border border-ink-rule self-start">
-            <button
-              type="button"
-              onClick={() => setActiveTab('browse')}
-              className={`text-xs px-3 py-1 font-semibold rounded-md transition ${
-                activeTab === 'browse'
-                  ? 'bg-ink-night-2 text-cream font-bold shadow-sm border border-ink-rule'
-                  : 'text-stone-400 hover:text-cream'
-              }`}
-            >
-              Browse Store
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('paste')}
-              className={`text-xs px-3 py-1 font-semibold rounded-md transition ${
-                activeTab === 'paste'
-                  ? 'bg-ink-night-2 text-cream font-bold shadow-sm border border-ink-rule'
-                  : 'text-stone-400 hover:text-cream'
-              }`}
-            >
-              Paste Order #s
-            </button>
-          </div>
+        {/* Segmented Toggle */}
+        <div className="flex items-center gap-1 bg-bg border border-border p-1 rounded-lg self-start">
+          <button
+            type="button"
+            onClick={() => setActiveTab('browse')}
+            className={`text-xs px-3 py-1.5 font-medium rounded-md transition cursor-pointer ${
+              activeTab === 'browse'
+                ? 'bg-surface text-text shadow-sm border border-border/60'
+                : 'text-text-muted hover:text-text'
+            }`}
+          >
+            Browse Store
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('paste')}
+            className={`text-xs px-3 py-1.5 font-medium rounded-md transition cursor-pointer ${
+              activeTab === 'paste'
+                ? 'bg-surface text-text shadow-sm border border-border/60'
+                : 'text-text-muted hover:text-text'
+            }`}
+          >
+            Paste Order #s
+          </button>
         </div>
       </div>
 
-      {/* Tab 1: Browse Recent Orders */}
+      {/* Tab 1: Browse Store */}
       {activeTab === 'browse' && (
         <div className="space-y-3">
+          {/* Search bar */}
           <form onSubmit={handleSearchSubmit} className="flex gap-2">
             <div className="relative flex-1">
               <input
@@ -352,134 +233,138 @@ export default function ImportSection({
                 placeholder="Search recent orders by customer, order #, or email…"
                 value={searchQuery}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                className="w-full bg-ink-night border border-ink-rule rounded px-3 py-1.5 pl-8 pr-8 text-xs text-cream placeholder-stone-500 focus:outline-none focus:border-stamp-pending"
+                className="w-full h-10 bg-bg border border-border rounded-lg pl-9 pr-9 text-sm text-text placeholder-[#9CA3AF] focus:border-accent"
               />
-              <Search className="w-3.5 h-3.5 text-stone-500 absolute left-2.5 top-2.5" />
+              <Search className="w-4 h-4 text-text-muted absolute left-3 top-3 pointer-events-none" />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => handleSearchChange('')}
-                  className="absolute right-2.5 top-2 text-stone-400 hover:text-cream text-xs font-mono"
-                  title="Clear search and return to all orders"
+                  className="absolute right-3 top-3 text-text-muted hover:text-text p-0.5 rounded cursor-pointer"
+                  title="Clear search"
                 >
-                  ✕
+                  <X className="w-4 h-4" />
                 </button>
               )}
             </div>
             <button
               type="submit"
               disabled={browseLoading || searchLoading}
-              className="bg-ink-night hover:bg-stone-800 text-stone-300 border border-ink-rule px-3 py-1.5 text-xs rounded font-medium flex items-center gap-1.5 transition cursor-pointer"
+              className="h-10 px-4 bg-surface hover:bg-slate-50 dark:hover:bg-slate-800 text-text border border-border rounded-lg text-sm font-medium flex items-center gap-2 transition cursor-pointer"
             >
               {browseLoading || searchLoading ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-stamp-pending" />
+                <Loader2 className="w-4 h-4 animate-spin text-accent" />
               ) : (
-                <RefreshCw className="w-3.5 h-3.5" />
+                <RefreshCw className="w-4 h-4 text-text-muted" />
               )}
-              <span>{searchLoading ? 'Searching…' : 'Search'}</span>
+              <span>{searchLoading ? 'Searching…' : 'Refresh'}</span>
             </button>
           </form>
 
-          {/* Orders list */}
-          <div className="border border-ink-rule rounded bg-ink-night overflow-hidden max-h-[420px] overflow-y-auto">
+          {/* Table Container: Sticky header, 48px rows, max 360px scrollable */}
+          <div className="border border-border rounded-lg bg-surface overflow-hidden max-h-[360px] overflow-y-auto">
             {(browseLoading || searchLoading || loadingAll) && recentOrders.length === 0 ? (
-              <div className="p-8 text-center text-xs text-stone-400 flex items-center justify-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-stamp-pending" />
-                <span>
-                  {loadingAll
-                    ? 'Loading all orders from August till now…'
-                    : searchLoading
-                    ? 'Searching Shopify for matching orders…'
-                    : 'Loading orders from August till now…'}
-                </span>
+              <div className="py-16 text-center text-sm text-text-muted flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-accent" />
+                <span>Loading live Shopify orders…</span>
               </div>
             ) : recentOrders.length === 0 ? (
-              <div className="p-8 text-center text-xs text-stone-500">
-                No orders found. Check your search query or store connection.
+              <div className="py-16 text-center text-sm text-text-muted">
+                No orders match your search query.
               </div>
             ) : (
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b border-ink-rule bg-ink-night-2 font-mono text-xs font-bold uppercase tracking-wider text-stone-300">
-                    <th className="p-3 w-10 text-center">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="sticky top-0 bg-surface z-10 shadow-[0_1px_0_0_var(--border)]">
+                  <tr className="border-b border-border text-xs font-semibold text-text-muted">
+                    <th className="py-3 px-3 w-10 text-center">
                       <button
                         type="button"
                         onClick={toggleSelectAll}
-                        className="text-stone-300 hover:text-cream"
+                        className="text-text-muted hover:text-text cursor-pointer flex items-center justify-center"
+                        aria-label="Select all orders"
                       >
-                        {selectedOrderIds.size === recentOrders.length ? (
-                          <CheckSquare className="w-4 h-4 text-stamp-ready" />
+                        {selectedOrderIds.size === recentOrders.length && recentOrders.length > 0 ? (
+                          <CheckSquare className="w-4 h-4 text-accent" />
                         ) : (
                           <Square className="w-4 h-4" />
                         )}
                       </button>
                     </th>
-                    <th className="p-3">Order</th>
-                    <th className="p-3">Fulfillment</th>
-                    <th className="p-3">Customer</th>
-                    <th className="p-3">Items</th>
-                    <th className="p-3">Total</th>
-                    <th className="p-3">Placed</th>
+                    <th className="py-3 px-3">Order</th>
+                    <th className="py-3 px-3">Fulfillment</th>
+                    <th className="py-3 px-3">Customer</th>
+                    <th className="py-3 px-3">Items</th>
+                    <th className="py-3 px-3 text-right">Total</th>
+                    <th className="py-3 px-3 text-right">Placed</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-ink-rule/50">
+                <tbody className="divide-y divide-border">
                   {recentOrders.map((ord) => {
                     const isSelected = selectedOrderIds.has(ord.id);
                     const isAlreadyImported = existingOrderIds.includes(ord.name);
+                    const itemsSummary = ord.items.map((i) => `${i.name} (${i.size})`).join(', ');
 
                     return (
                       <tr
                         key={ord.id}
                         onClick={() => toggleSelectOrder(ord.id)}
-                        className={`hover:bg-stone-900/60 cursor-pointer transition ${
-                          isSelected ? 'bg-stamp-pending/10' : ''
+                        className={`h-12 hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer transition-colors ${
+                          isSelected ? 'bg-indigo-50/60 dark:bg-indigo-950/20' : ''
                         }`}
                       >
-                        <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
+                        <td className="py-2 px-3 text-center" onClick={(e) => e.stopPropagation()}>
                           <button
                             type="button"
                             onClick={() => toggleSelectOrder(ord.id)}
-                            className="text-stone-300 hover:text-cream"
+                            className="text-text-muted hover:text-text cursor-pointer flex items-center justify-center mx-auto"
                           >
                             {isSelected ? (
-                              <CheckSquare className="w-4 h-4 text-stamp-ready" />
+                              <CheckSquare className="w-4 h-4 text-accent" />
                             ) : (
                               <Square className="w-4 h-4" />
                             )}
                           </button>
                         </td>
-                        <td className="p-3 font-mono font-extrabold text-sm text-stamp-pending">
+                        <td className="py-2 px-3 font-semibold text-text tabular-nums whitespace-nowrap">
                           {ord.name}
                           {isAlreadyImported && (
-                            <span className="ml-2 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-stone-800 text-stone-300">
+                            <span className="ml-2 text-[11px] font-medium px-1.5 py-0.5 rounded bg-bg text-text-muted border border-border">
                               Imported
                             </span>
                           )}
                         </td>
-                        <td className="p-3 font-mono">
+                        <td className="py-2 px-3 whitespace-nowrap">
                           {ord.fulfillmentStatus?.toUpperCase() === 'FULFILLED' ? (
-                            <span className="px-2.5 py-0.5 rounded text-xs font-bold bg-emerald-950/70 text-emerald-400 border border-emerald-800">
+                            <span className="px-2 py-0.5 rounded text-xs font-medium bg-[#DCFCE7] text-[#166534] dark:bg-[#14532D] dark:text-[#BBF7D0]">
                               Fulfilled
                             </span>
                           ) : ord.fulfillmentStatus?.toUpperCase()?.includes('PARTIAL') ? (
-                            <span className="px-2.5 py-0.5 rounded text-xs font-bold bg-blue-950/70 text-blue-400 border border-blue-800">
+                            <span className="px-2 py-0.5 rounded text-xs font-medium bg-[#DBEAFE] text-[#1E40AF] dark:bg-[#1E3A8A] dark:text-[#BFDBFE]">
                               Partial
                             </span>
                           ) : (
-                            <span className="px-2.5 py-0.5 rounded text-xs font-bold bg-amber-950/70 text-amber-400 border border-amber-800">
+                            <span className="px-2 py-0.5 rounded text-xs font-medium bg-[#FEF3C7] text-[#92400E] dark:bg-[#451A03] dark:text-[#FDE68A]">
                               Unfulfilled
                             </span>
                           )}
                         </td>
-                        <td className="p-3 font-bold text-sm text-cream">{ord.customer}</td>
-                        <td className="p-3 text-stone-300">
-                          <span className="font-mono font-bold text-cream">{ord.itemCount}</span> items &middot;{' '}
-                          <span className="text-xs truncate inline-block max-w-[220px] align-bottom font-medium">
-                            {ord.items.map((i) => `${i.name} (${i.size})`).join(', ')}
+                        <td className="py-2 px-3 font-semibold text-text text-sm whitespace-nowrap" dir="auto">
+                          {ord.customer}
+                        </td>
+                        <td className="py-2 px-3 text-text-muted max-w-[280px]">
+                          <span className="font-semibold text-text tabular-nums">{ord.itemCount}</span> items &middot;{' '}
+                          <span
+                            className="truncate inline-block max-w-[210px] align-bottom text-text-muted"
+                            title={itemsSummary}
+                          >
+                            {itemsSummary}
                           </span>
                         </td>
-                        <td className="p-3 font-mono font-bold text-xs text-stone-200">{ord.totalPrice}</td>
-                        <td className="p-3 font-mono text-xs font-medium text-stone-400">
+                        <td className="py-2 px-3 font-medium text-text text-right tabular-nums whitespace-nowrap">
+                          {formatCurrency(ord.totalPrice)}
+                          <span className="text-text-muted text-[11px] ml-1 font-normal">EGP</span>
+                        </td>
+                        <td className="py-2 px-3 text-text-muted text-right tabular-nums whitespace-nowrap text-xs">
                           {new Date(ord.createdAt).toLocaleDateString()}
                         </td>
                       </tr>
@@ -490,30 +375,27 @@ export default function ImportSection({
             )}
           </div>
 
-          {/* Action bar for browse */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-1 gap-2">
-            <div className="text-xs text-stone-400 flex items-center gap-2">
-              <span>{selectedOrderIds.size} selected</span>
-              <span className="text-stone-600">&middot;</span>
-              <span>{recentOrders.length} orders loaded (Aug &rarr; Present)</span>
+          {/* Action Bar for Browse: muted counter left, Import Selected anchored right */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-2 gap-3">
+            <div className="text-xs text-text-muted">
+              <span className="font-medium text-text tabular-nums">{selectedOrderIds.size}</span> selected &middot;{' '}
+              <span className="tabular-nums">{recentOrders.length}</span> orders loaded
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleImportSelected}
-                disabled={selectedOrderIds.size === 0}
-                className="font-mono text-xs font-bold px-3.5 py-1.5 rounded-lg bg-stone-200 hover:bg-white text-stone-900 shadow-sm transition flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <span>Import {selectedOrderIds.size > 0 ? `(${selectedOrderIds.size})` : ''} Selected</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleImportSelected}
+              disabled={selectedOrderIds.size === 0}
+              className="h-10 px-4 rounded-lg bg-accent hover:bg-accent-hover text-white text-sm font-medium transition cursor-pointer flex items-center justify-center gap-2 disabled:bg-gray-200 disabled:text-gray-400 dark:disabled:bg-slate-700 dark:disabled:text-slate-500 disabled:cursor-not-allowed shadow-sm self-end sm:self-auto"
+            >
+              <span>Import Selected {selectedOrderIds.size > 0 ? `(${selectedOrderIds.size})` : ''}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}
 
-      {/* Tab 2: Paste manual textarea */}
+      {/* Tab 2: Paste Order Numbers */}
       {activeTab === 'paste' && (
         <div className="space-y-3">
           <textarea
@@ -522,16 +404,20 @@ export default function ImportSection({
             value={rawInput}
             onChange={(e) => setRawInput(e.target.value)}
             onPaste={handlePaste}
-            placeholder="Paste order numbers here, separated by comma, space, or newline&#10;e.g. 1001, 1002, 1005"
-            className="w-full min-h-[90px] bg-ink-night border border-ink-rule rounded-lg p-3 text-xs sm:text-sm font-mono text-cream resize-y focus:outline-none focus:border-stone-400 transition"
+            placeholder="Paste order numbers here, separated by comma, space, or newline (e.g. 1001, 1002, 1005)..."
+            className="w-full min-h-[100px] bg-bg border border-border rounded-lg p-3 text-sm text-text resize-y focus:border-accent"
           />
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center justify-between flex-wrap gap-2 pt-1">
+            <span className="text-xs text-text-muted">
+              Pasting automatically parses and fetches live order details from Shopify.
+            </span>
+
             <button
               type="button"
               onClick={() => performLookup()}
               disabled={fetching || !rawInput.trim()}
-              className="font-mono text-xs font-bold px-3.5 py-2 rounded-lg bg-stone-200 hover:bg-white text-stone-900 shadow-sm transition flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
+              className="h-10 px-4 rounded-lg bg-accent hover:bg-accent-hover text-white text-sm font-medium transition cursor-pointer flex items-center gap-2 disabled:bg-gray-200 disabled:text-gray-400 dark:disabled:bg-slate-700 dark:disabled:text-slate-500 disabled:cursor-not-allowed shadow-sm"
             >
               {fetching ? (
                 <>
@@ -541,30 +427,11 @@ export default function ImportSection({
               ) : (
                 <>
                   <span>Fetch from Shopify</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
-
-            <button
-              type="button"
-              onClick={loadSample}
-              className="font-mono text-xs font-medium px-3 py-2 rounded-lg bg-ink-night hover:bg-ink-night-3 border border-ink-rule text-stone-300 transition cursor-pointer"
-            >
-              Load sample numbers
-            </button>
-
-            <span className="text-[11px] text-stone-500 font-mono">
-              Format: order numbers, with or without &quot;#&quot; — pasting auto-fetches
-            </span>
           </div>
-        </div>
-      )}
-
-      {/* Duplicate notice */}
-      {duplicateNotice && (
-        <div className="mt-2.5 p-2 bg-stone-900/60 border border-stone-700 rounded text-xs text-stone-300 font-mono">
-          ℹ {duplicateNotice}
         </div>
       )}
     </div>

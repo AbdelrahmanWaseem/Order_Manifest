@@ -44,82 +44,89 @@ export default function TopBar({
     }
   };
 
-  const chips: Array<{
+  const statusChips: Array<{
     key: ItemStatus;
     label: string;
-    dotColor: string;
-    activeStyles: string;
+    lightBg: string;
+    lightText: string;
+    darkBg: string;
+    darkText: string;
+    activeRing: string;
   }> = [
     {
       key: 'pending',
       label: 'Pending',
-      dotColor: '#f59e0b',
-      activeStyles: 'bg-amber-500/10 text-amber-300 border-amber-500/40 shadow-sm font-bold',
+      lightBg: 'bg-[#FEF3C7]',
+      lightText: 'text-[#92400E]',
+      darkBg: 'dark:bg-[#451A03]',
+      darkText: 'dark:text-[#FDE68A]',
+      activeRing: 'ring-2 ring-amber-500 font-semibold',
     },
     {
       key: 'ready',
       label: 'Ready',
-      dotColor: '#10b981',
-      activeStyles: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/40 shadow-sm font-bold',
+      lightBg: 'bg-[#DCFCE7]',
+      lightText: 'text-[#166534]',
+      darkBg: 'dark:bg-[#14532D]',
+      darkText: 'dark:text-[#BBF7D0]',
+      activeRing: 'ring-2 ring-emerald-500 font-semibold',
     },
     {
       key: 'incoming',
       label: 'Incoming',
-      dotColor: '#60a5fa',
-      activeStyles: 'bg-blue-500/10 text-blue-300 border-blue-500/40 shadow-sm font-bold',
+      lightBg: 'bg-[#DBEAFE]',
+      lightText: 'text-[#1E40AF]',
+      darkBg: 'dark:bg-[#1E3A8A]',
+      darkText: 'dark:text-[#BFDBFE]',
+      activeRing: 'ring-2 ring-blue-500 font-semibold',
     },
     {
       key: 'missing',
       label: 'Missing',
-      dotColor: '#f87171',
-      activeStyles: 'bg-rose-500/10 text-rose-300 border-rose-500/40 shadow-sm font-bold',
+      lightBg: 'bg-[#FEE2E2]',
+      lightText: 'text-[#991B1B]',
+      darkBg: 'dark:bg-[#7F1D1D]',
+      darkText: 'dark:text-[#FECACA]',
+      activeRing: 'ring-2 ring-red-500 font-semibold',
     },
   ];
 
   return (
-    <header className="border-b border-ink-rule pb-4 mb-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5">
+    <header className="border-b border-border pb-4 mb-6">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         {/* Left: Brand & Title */}
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-mono text-[11px] font-bold tracking-widest uppercase text-stone-400">
-              Essentials EG Ops
-            </span>
-            <div className="flex items-center gap-1.5 text-[11px] font-mono text-stone-400 bg-ink-night-2 px-2 py-0.5 rounded border border-ink-rule font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/90"></span>
+          <h1 className="text-2xl font-semibold text-text tracking-tight leading-tight">
+            Order Manifest
+          </h1>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-xs text-text-muted font-medium">Essentials EG Ops</span>
+            <span className="text-text-muted text-xs">&middot;</span>
+            <div className="flex items-center gap-1.5 text-xs text-text-muted font-medium">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
               <span>Shopify Live</span>
             </div>
           </div>
-
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-cream">
-            Order Manifest
-          </h1>
         </div>
 
         {/* Right: Actions, Filters & Circled Theme Toggle */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2.5 flex-wrap">
           {/* Status Filter Pills */}
-          <div className="flex gap-1 p-1 bg-ink-night-2 border border-ink-rule rounded-xl shadow-sm flex-wrap">
-            {chips.map(({ key, label, dotColor, activeStyles }) => {
+          <div className="flex items-center gap-1.5 bg-surface border border-border rounded-lg p-1">
+            {statusChips.map(({ key, label, lightBg, lightText, darkBg, darkText, activeRing }) => {
               const isActive = activeFilter === key;
               return (
                 <button
                   key={key}
                   type="button"
                   onClick={() => onToggleFilter(key)}
-                  className={`font-mono text-xs px-3 py-1.5 rounded-lg border transition-all duration-150 cursor-pointer flex items-center gap-2 ${
-                    isActive
-                      ? activeStyles
-                      : 'border-transparent text-stone-400 hover:text-cream hover:bg-ink-night-3/60'
+                  className={`text-xs px-2.5 py-1.5 rounded-md transition cursor-pointer flex items-center gap-1.5 ${lightBg} ${lightText} ${darkBg} ${darkText} ${
+                    isActive ? activeRing : 'opacity-85 hover:opacity-100'
                   }`}
                   title={`Filter board by ${label}`}
                 >
-                  <span
-                    className="w-2 h-2 rounded-full shrink-0"
-                    style={{ backgroundColor: dotColor }}
-                  />
-                  <span>{label}</span>
-                  <span className="text-xs px-1.5 py-0.2 rounded font-mono font-bold bg-ink-night border border-ink-rule/60 text-stone-300">
+                  <span className="font-medium">{label}</span>
+                  <span className="font-semibold tabular-nums">
                     {counts[key]}
                   </span>
                 </button>
@@ -132,10 +139,10 @@ export default function TopBar({
             <button
               type="button"
               onClick={onOpenManualOrder}
-              className="font-mono text-xs font-bold px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition-all duration-150 active:scale-95 flex items-center gap-1.5 cursor-pointer ml-1"
+              className="h-10 px-4 rounded-lg bg-accent hover:bg-accent-hover text-white text-sm font-medium transition cursor-pointer flex items-center gap-1.5 shadow-sm shrink-0"
               title="Create a manual internal order"
             >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <Plus className="w-4 h-4 stroke-[2.25]" />
               <span>Manual Order</span>
             </button>
           )}
@@ -144,7 +151,7 @@ export default function TopBar({
           <button
             type="button"
             onClick={toggleTheme}
-            className="w-9 h-9 rounded-full border border-ink-rule bg-ink-night-2 hover:bg-ink-night-3 text-stone-300 hover:text-white flex items-center justify-center shadow-sm transition-all duration-150 active:scale-95 cursor-pointer shrink-0 ml-auto sm:ml-1"
+            className="w-10 h-10 rounded-full border border-border bg-surface hover:bg-slate-50 dark:hover:bg-slate-800 text-text flex items-center justify-center transition cursor-pointer shrink-0"
             title={`Switch to ${mounted && theme === 'light' ? 'Dark' : 'Light'} mode`}
             aria-label="Toggle theme"
           >

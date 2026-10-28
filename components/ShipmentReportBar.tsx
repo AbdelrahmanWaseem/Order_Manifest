@@ -1,14 +1,16 @@
 'use client';
 
 import React from 'react';
-import { Loader2, FileText, FolderArchive } from 'lucide-react';
+import { Loader2, FolderArchive, ArrowRight } from 'lucide-react';
 
 interface ShipmentReportBarProps {
-  statusMessage: string;
+  statusMessage?: string;
   savedReportsCount: number;
   onOpenArchive: () => void;
   onGenerateReport: () => void;
   savingReport: boolean;
+  totalItems?: number;
+  stampedItems?: number;
 }
 
 export default function ShipmentReportBar({
@@ -17,45 +19,80 @@ export default function ShipmentReportBar({
   onOpenArchive,
   onGenerateReport,
   savingReport,
+  totalItems = 0,
+  stampedItems = 0,
 }: ShipmentReportBarProps) {
+  const isAllStamped = totalItems > 0 && stampedItems >= totalItems;
+  const progressPercent = totalItems > 0 ? Math.min(100, Math.round((stampedItems / totalItems) * 100)) : 0;
+
   return (
-    <div className="sticky bottom-3 mt-8 bg-ink-night-2/95 border border-ink-rule rounded-xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg z-30 backdrop-blur-sm no-print">
-      <div>
-        <div className="font-bold text-sm text-cream tracking-tight flex items-center gap-2">
-          <FileText className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-          <span>Shipment Manifest Report</span>
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-surface border-t border-border shadow-[0_-2px_8px_rgba(0,0,0,0.04)] py-3 no-print">
+      <div className="max-w-[1100px] mx-auto px-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Left: Stamped count and progress bar */}
+        <div className="flex-1 min-w-[240px]">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-semibold text-text tabular-nums whitespace-nowrap">
+              {stampedItems} / {totalItems} items stamped
+            </span>
+            <div className="flex-1 max-w-[200px] h-2 bg-bg border border-border rounded-full overflow-hidden">
+              <div
+                className={`h-full transition-all duration-200 rounded-full ${
+                  isAllStamped ? 'bg-emerald-500' : 'bg-accent'
+                }`}
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            <span className="text-xs text-text-muted tabular-nums font-medium">
+              {progressPercent}%
+            </span>
+          </div>
+
+          <div className="text-xs text-text-muted mt-1">
+            {totalItems === 0
+              ? 'No active orders in manifest'
+              : !isAllStamped
+              ? `${totalItems - stampedItems} item(s) remaining — stamp all items before generating report`
+              : 'All items stamped — ready to generate shipment report'}
+          </div>
         </div>
-        <div className="text-xs text-stone-600 dark:text-stone-400 mt-0.5">{statusMessage}</div>
-      </div>
 
-      <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
-        <button
-          type="button"
-          onClick={onOpenArchive}
-          className="bg-ink-night hover:bg-ink-night-3 border border-ink-rule hover:border-stone-400 text-cream font-bold text-xs px-3.5 py-2 rounded-xl transition cursor-pointer flex items-center gap-2 shadow-sm"
-        >
-          <FolderArchive className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0" />
-          <span>Saved Reports</span>
-          <span className="font-mono text-xs font-extrabold bg-ink-night-3 text-cream px-2 py-0.5 rounded-md border border-ink-rule">
-            {savedReportsCount}
-          </span>
-        </button>
+        {/* Right: Saved Reports (Secondary) & Generate Report (Primary) */}
+        <div className="flex items-center gap-3 shrink-0 self-end sm:self-auto">
+          <button
+            type="button"
+            onClick={onOpenArchive}
+            className="h-11 px-4 bg-surface hover:bg-slate-50 dark:hover:bg-slate-800 text-text border border-border rounded-lg text-sm font-medium transition cursor-pointer flex items-center gap-2 shadow-sm"
+          >
+            <FolderArchive className="w-4 h-4 text-text-muted" />
+            <span>Saved Reports</span>
+            <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded bg-bg text-text-muted border border-border">
+              {savedReportsCount}
+            </span>
+          </button>
 
-        <button
-          type="button"
-          onClick={onGenerateReport}
-          disabled={savingReport}
-          className="bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs sm:text-sm px-4.5 py-2 rounded-xl transition-all active:scale-95 cursor-pointer flex items-center gap-2 disabled:opacity-40 shadow-sm"
-        >
-          {savingReport ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin text-white" />
-              <span className="text-white">Saving Report…</span>
-            </>
-          ) : (
-            <span className="text-white">Generate Report</span>
-          )}
-        </button>
+          <button
+            type="button"
+            onClick={onGenerateReport}
+            disabled={!isAllStamped || savingReport}
+            className={`min-h-[44px] px-5 rounded-lg text-sm font-semibold transition cursor-pointer flex items-center justify-center gap-2 whitespace-nowrap shadow-sm ${
+              isAllStamped && !savingReport
+                ? 'bg-accent hover:bg-accent-hover text-white'
+                : 'bg-[#E5E7EB] text-[#6B7280] dark:bg-[#334155] dark:text-[#9CA3AF] cursor-not-allowed'
+            }`}
+          >
+            {savingReport ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-white" />
+                <span>Saving Report…</span>
+              </>
+            ) : (
+              <>
+                <span>Generate Report</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { ManifestItem, ItemStatus } from '@/types/manifest';
-import { Check, Clock, AlertOctagon, RotateCcw } from 'lucide-react';
 
 interface TicketCardProps {
   orderId: string;
@@ -19,181 +18,149 @@ export default function TicketCard({
   onCycleStatus,
   onSetNote,
 }: TicketCardProps) {
+  const isReady = item.status === 'ready';
+  const isIncoming = item.status === 'incoming';
+  const isMissing = item.status === 'missing';
   const isStamped = item.status !== 'pending';
 
-  const stampLabelMap: Record<ItemStatus, string> = {
-    pending: 'Pending',
-    ready: 'Ready to Ship',
-    incoming: 'Incoming Stock',
-    missing: 'Item Missing',
-  };
-
-  const stampConfig: Record<
-    ItemStatus,
-    { border: string; bg: string; text: string; icon: React.ReactNode }
-  > = {
-    pending: {
-      border: 'border-amber-500/50',
-      bg: 'bg-amber-950/60',
-      text: 'text-amber-300',
-      icon: <Clock className="w-4 h-4" />,
-    },
-    ready: {
-      border: 'border-emerald-500/50',
-      bg: 'bg-emerald-950/60',
-      text: 'text-emerald-300',
-      icon: <Check className="w-4 h-4 stroke-[2.5]" />,
-    },
-    incoming: {
-      border: 'border-blue-500/50',
-      bg: 'bg-blue-950/60',
-      text: 'text-blue-300',
-      icon: <Clock className="w-4 h-4" />,
-    },
-    missing: {
-      border: 'border-rose-500/50',
-      bg: 'bg-rose-950/60',
-      text: 'text-rose-300',
-      icon: <AlertOctagon className="w-4 h-4" />,
-    },
-  };
+  // Container styling based on stamped state
+  let cardBgBorder = 'bg-surface border-border';
+  if (isReady) {
+    cardBgBorder = 'bg-[#F0FDF4] dark:bg-[#052E16] border-[#BBF7D0] dark:border-[#166534]';
+  } else if (isIncoming) {
+    cardBgBorder = 'bg-[#EFF6FF] dark:bg-[#172554] border-[#BFDBFE] dark:border-[#1E40AF]';
+  } else if (isMissing) {
+    cardBgBorder = 'bg-[#FEF2F2] dark:bg-[#450A0A] border-[#FECACA] dark:border-[#991B1B]';
+  }
 
   return (
     <div
-      className={`ticket group transition-all duration-150 ${
-        isStamped ? 'ticket-stamped opacity-85 hover:opacity-100' : ''
-      }`}
+      className={`border rounded-lg p-3.5 flex flex-col justify-between transition-colors shadow-sm ${cardBgBorder}`}
       data-order-id={orderId}
       data-item-id={item.id}
     >
-      <div className="p-3.5 flex flex-col justify-between h-full">
-        {/* Click zone on header & name to cycle status */}
-        <div
-          onClick={() => onCycleStatus(orderId, item.id)}
-          className="cursor-pointer select-none"
-          title="Click to cycle status"
-        >
-          {/* Eyebrow: order ID + SKU */}
-          <div className="font-mono text-xs font-semibold uppercase flex justify-between items-center text-stone-400 mb-1">
-            <span className="font-bold text-stone-300">{orderId}</span>
-            {item.sku && (
-              <span className="text-[11px] text-stone-500 font-mono">
-                {item.sku}
-              </span>
-            )}
-          </div>
+      <div>
+        {/* Top row: Status pill if stamped + Reset button */}
+        <div className="flex items-center justify-between gap-2 mb-2 min-h-[22px]">
+          {isStamped ? (
+            <>
+              {isReady && (
+                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[#DCFCE7] text-[#166534] dark:bg-[#14532D] dark:text-[#BBF7D0]">
+                  ✓ Ready to ship
+                </span>
+              )}
+              {isIncoming && (
+                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[#DBEAFE] text-[#1E40AF] dark:bg-[#1E3A8A] dark:text-[#BFDBFE]">
+                  Incoming stock
+                </span>
+              )}
+              {isMissing && (
+                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[#FEE2E2] text-[#991B1B] dark:bg-[#7F1D1D] dark:text-[#FECACA]">
+                  Item missing
+                </span>
+              )}
 
-          {/* Product Name */}
-          <h4 className="font-bold text-[14.5px] leading-snug my-1 text-cream tracking-tight">
-            {item.name}
-          </h4>
-
-          {/* Brand, Size, Qty */}
-          <div className="font-mono text-xs text-stone-300 flex items-center flex-wrap gap-1.5 mt-1">
-            <div className="flex items-center gap-1 font-semibold">
-              <span
-                className="w-2 h-2 rounded-full inline-block shrink-0 opacity-80"
-                style={{ backgroundColor: item.brandColor }}
-              />
-              <span>{item.brand}</span>
-            </div>
-            <span className="text-stone-500">&middot;</span>
-            <span className="font-semibold text-stone-200">
-              sz {item.size}
-            </span>
-            {item.color && (
-              <>
-                <span className="text-stone-500">&middot;</span>
-                <span className="text-stone-400">{item.color}</span>
-              </>
-            )}
-            {item.quantity > 1 && (
-              <span className="bg-ink-night-3 px-1.5 py-0.2 rounded text-stone-200 font-bold border border-ink-rule">
-                &times;{item.quantity}
-              </span>
-            )}
-          </div>
-
-          {/* Stock inventory indicator - no out-of-stock warnings */}
-          {item.inventoryQuantity !== null && item.inventoryQuantity > 0 && (
-            <div className="mt-2 flex items-center gap-2 font-mono text-[11px] flex-wrap">
-              <span className="px-2 py-0.5 rounded text-[11px] font-semibold border bg-ink-night-3 text-stone-300 border-ink-rule">
-                Stock: {item.inventoryQuantity}
-              </span>
-            </div>
+              <button
+                type="button"
+                onClick={() => onSetStatus(orderId, item.id, 'pending')}
+                className="text-xs text-text-muted hover:text-text underline font-medium transition cursor-pointer ml-auto"
+                title="Reset item to pending"
+              >
+                Reset
+              </button>
+            </>
+          ) : (
+            <div className="text-xs text-text-muted font-medium">Pending status</div>
           )}
         </div>
 
-        {/* Bottom Section: Note field + Stamp Buttons */}
-        <div className="mt-3 pt-2.5 border-t border-ink-rule space-y-2">
-          {/* Note input */}
-          <input
-            type="text"
-            placeholder="Add note…"
-            value={item.note}
-            onChange={(e) => onSetNote(orderId, item.id, e.target.value)}
-            className="w-full text-xs font-mono bg-ink-night border border-ink-rule rounded-md px-2.5 py-1 text-cream placeholder-stone-500 focus:outline-none focus:border-stone-400 transition"
-          />
+        {/* Product Title */}
+        <h4 className="font-semibold text-sm text-text leading-snug">
+          {item.name}
+        </h4>
 
-          {/* Stamp action buttons */}
-          <div className="grid grid-cols-3 gap-1.5">
-            <button
-              type="button"
-              onClick={() => onSetStatus(orderId, item.id, 'ready')}
-              className="font-mono text-xs font-bold tracking-wider py-1.5 rounded-md bg-emerald-950/30 text-emerald-300 hover:bg-emerald-700 hover:text-white border border-emerald-800/40 transition-colors duration-150 active:scale-95 cursor-pointer text-center"
-            >
-              READY
-            </button>
-            <button
-              type="button"
-              onClick={() => onSetStatus(orderId, item.id, 'incoming')}
-              className="font-mono text-xs font-bold tracking-wider py-1.5 rounded-md bg-blue-950/30 text-blue-300 hover:bg-blue-700 hover:text-white border border-blue-800/40 transition-colors duration-150 active:scale-95 cursor-pointer text-center"
-            >
-              INCOMING
-            </button>
-            <button
-              type="button"
-              onClick={() => onSetStatus(orderId, item.id, 'missing')}
-              className="font-mono text-xs font-bold tracking-wider py-1.5 rounded-md bg-rose-950/30 text-rose-300 hover:bg-rose-700 hover:text-white border border-rose-800/40 transition-colors duration-150 active:scale-95 cursor-pointer text-center"
-            >
-              MISSING
-            </button>
-          </div>
+        {/* Brand, Size, Color, Qty */}
+        <div className="text-xs text-text-muted flex items-center flex-wrap gap-1.5 mt-1.5">
+          <span className="font-medium text-text">{item.brand}</span>
+          <span>&middot;</span>
+          <span className="font-medium text-text">sz {item.size}</span>
+          {item.color && (
+            <>
+              <span>&middot;</span>
+              <span>{item.color}</span>
+            </>
+          )}
+          {item.quantity > 1 && (
+            <span className="bg-surface border border-border px-1.5 py-0.2 rounded font-semibold text-text tabular-nums">
+              &times;{item.quantity}
+            </span>
+          )}
+          {item.sku && (
+            <>
+              <span>&middot;</span>
+              <span className="text-[11px] text-text-muted tabular-nums">{item.sku}</span>
+            </>
+          )}
         </div>
+
+        {/* Stock indicator (if positive) */}
+        {item.inventoryQuantity !== null && item.inventoryQuantity > 0 && (
+          <div className="mt-2 text-xs text-text-muted flex items-center gap-1.5 font-medium">
+            <span>Stock:</span>
+            <span className="text-text tabular-nums font-semibold">{item.inventoryQuantity}</span>
+          </div>
+        )}
       </div>
 
-      {/* Stamped overlay when status is stamped */}
-      {isStamped && (
-        <>
-          <div
-            onClick={() => onCycleStatus(orderId, item.id)}
-            className="absolute inset-0 flex items-center justify-center bg-black/50 dark:bg-black/60 backdrop-blur-[1px] cursor-pointer z-10 transition-all duration-150"
-            title="Click to cycle status"
+      {/* Bottom row: Note input + Action Buttons */}
+      <div className="mt-3.5 pt-3 border-t border-border/70 space-y-2">
+        <input
+          type="text"
+          placeholder="Add note…"
+          value={item.note || ''}
+          onChange={(e) => onSetNote(orderId, item.id, e.target.value)}
+          className="w-full h-9 px-2.5 text-xs bg-surface border border-border rounded-md text-text placeholder-[#9CA3AF] focus:border-accent"
+        />
+
+        {/* Action Buttons: 3 in a row, min 36px height */}
+        <div className="grid grid-cols-3 gap-1.5">
+          <button
+            type="button"
+            onClick={() => onSetStatus(orderId, item.id, 'ready')}
+            className={`min-h-[36px] text-xs rounded-md transition cursor-pointer flex items-center justify-center font-medium ${
+              isReady
+                ? 'bg-[#DCFCE7] text-[#166534] border border-[#86EFAC] dark:bg-[#14532D] dark:text-[#BBF7D0] dark:border-[#166534] font-semibold shadow-xs'
+                : 'bg-surface border border-border text-text hover:bg-slate-50 dark:hover:bg-slate-800'
+            }`}
           >
-            <div
-              className={`font-mono font-bold text-sm sm:text-base tracking-wider border px-3.5 py-1.5 rounded-lg uppercase select-none shadow-md flex items-center gap-1.5 transform -rotate-2 ${
-                stampConfig[item.status].bg
-              } ${stampConfig[item.status].border} ${stampConfig[item.status].text}`}
-            >
-              {stampConfig[item.status].icon}
-              <span>{stampLabelMap[item.status]}</span>
-            </div>
-          </div>
+            Ready
+          </button>
 
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSetStatus(orderId, item.id, 'pending');
-            }}
-            className="absolute bottom-2 right-2 text-xs font-mono font-medium text-stone-400 hover:text-white bg-ink-night border border-ink-rule rounded px-2 py-0.5 shadow-sm transition cursor-pointer z-20 flex items-center gap-1"
-            title="Reset status back to Pending"
+            onClick={() => onSetStatus(orderId, item.id, 'incoming')}
+            className={`min-h-[36px] text-xs rounded-md transition cursor-pointer flex items-center justify-center font-medium ${
+              isIncoming
+                ? 'bg-[#DBEAFE] text-[#1E40AF] border border-[#93C5FD] dark:bg-[#1E3A8A] dark:text-[#BFDBFE] dark:border-[#1E40AF] font-semibold shadow-xs'
+                : 'bg-surface border border-border text-text hover:bg-slate-50 dark:hover:bg-slate-800'
+            }`}
           >
-            <RotateCcw className="w-3 h-3" />
-            <span>Reset</span>
+            Incoming
           </button>
-        </>
-      )}
+
+          <button
+            type="button"
+            onClick={() => onSetStatus(orderId, item.id, 'missing')}
+            className={`min-h-[36px] text-xs rounded-md transition cursor-pointer flex items-center justify-center font-medium ${
+              isMissing
+                ? 'bg-[#FEE2E2] text-[#991B1B] border border-[#FCA5A5] dark:bg-[#7F1D1D] dark:text-[#FECACA] dark:border-[#991B1B] font-semibold shadow-xs'
+                : 'bg-surface border border-border text-text hover:bg-slate-50 dark:hover:bg-slate-800'
+            }`}
+          >
+            Missing
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
