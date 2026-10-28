@@ -343,7 +343,7 @@ export default function ImportSection({
                               Partial
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded text-xs font-medium bg-[#FEF3C7] text-[#92400E] dark:bg-[#451A03] dark:text-[#FDE68A]">
+                            <span className="px-2 py-0.5 rounded text-xs font-medium bg-[#FEF3C7] text-[#92400E] dark:bg-[#78350F] dark:text-[#FDE68A]">
                               Unfulfilled
                             </span>
                           )}
@@ -386,7 +386,7 @@ export default function ImportSection({
               type="button"
               onClick={handleImportSelected}
               disabled={selectedOrderIds.size === 0}
-              className="h-10 px-4 rounded-lg bg-accent hover:bg-accent-hover text-white text-sm font-medium transition cursor-pointer flex items-center justify-center gap-2 disabled:bg-gray-200 disabled:text-gray-400 dark:disabled:bg-slate-700 dark:disabled:text-slate-500 disabled:cursor-not-allowed shadow-sm self-end sm:self-auto"
+              className="h-10 px-4 rounded-lg bg-[#4F46E5] hover:bg-[#4338CA] text-white text-sm font-medium transition cursor-pointer flex items-center justify-center gap-2 disabled:bg-[#E5E7EB] disabled:text-[#6B7280] dark:disabled:bg-[#334155] dark:disabled:text-[#9CA3AF] disabled:cursor-not-allowed shadow-sm self-end sm:self-auto"
             >
               <span>Import Selected {selectedOrderIds.size > 0 ? `(${selectedOrderIds.size})` : ''}</span>
               <ArrowRight className="w-4 h-4" />
@@ -417,7 +417,7 @@ export default function ImportSection({
               type="button"
               onClick={() => performLookup()}
               disabled={fetching || !rawInput.trim()}
-              className="h-10 px-4 rounded-lg bg-accent hover:bg-accent-hover text-white text-sm font-medium transition cursor-pointer flex items-center gap-2 disabled:bg-gray-200 disabled:text-gray-400 dark:disabled:bg-slate-700 dark:disabled:text-slate-500 disabled:cursor-not-allowed shadow-sm"
+              className="h-10 px-4 rounded-lg bg-[#4F46E5] hover:bg-[#4338CA] text-white text-sm font-medium transition cursor-pointer flex items-center gap-2 disabled:bg-[#E5E7EB] disabled:text-[#6B7280] dark:disabled:bg-[#334155] dark:disabled:text-[#9CA3AF] disabled:cursor-not-allowed shadow-sm"
             >
               {fetching ? (
                 <>

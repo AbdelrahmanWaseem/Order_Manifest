@@ -26,15 +26,15 @@ export default function ShipmentReportBar({
   const progressPercent = totalItems > 0 ? Math.min(100, Math.round((stampedItems / totalItems) * 100)) : 0;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-surface border-t border-border shadow-[0_-2px_8px_rgba(0,0,0,0.04)] py-3 no-print">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#FFFFFF] dark:bg-[#1E293B] border-t border-[#E3E6EB] dark:border-[#334155] py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] no-print">
       <div className="max-w-[1100px] mx-auto px-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        {/* Left: Stamped count and progress bar */}
+        {/* Left: Stamped count and thin progress bar */}
         <div className="flex-1 min-w-[240px]">
           <div className="flex items-center gap-3">
             <span className="text-sm font-semibold text-text tabular-nums whitespace-nowrap">
               {stampedItems} / {totalItems} items stamped
             </span>
-            <div className="flex-1 max-w-[200px] h-2 bg-bg border border-border rounded-full overflow-hidden">
+            <div className="flex-1 max-w-[200px] h-1.5 bg-bg border border-border rounded-full overflow-hidden">
               <div
                 className={`h-full transition-all duration-200 rounded-full ${
                   isAllStamped ? 'bg-emerald-500' : 'bg-accent'
@@ -56,27 +56,24 @@ export default function ShipmentReportBar({
           </div>
         </div>
 
-        {/* Right: Saved Reports (Secondary) & Generate Report (Primary) */}
+        {/* Right: Saved Reports (2) secondary button + Generate Report primary button */}
         <div className="flex items-center gap-3 shrink-0 self-end sm:self-auto">
           <button
             type="button"
             onClick={onOpenArchive}
-            className="h-11 px-4 bg-surface hover:bg-slate-50 dark:hover:bg-slate-800 text-text border border-border rounded-lg text-sm font-medium transition cursor-pointer flex items-center gap-2 shadow-sm"
+            className="min-h-[44px] h-11 px-4 bg-surface dark:bg-[#1E293B] hover:bg-slate-50 dark:hover:bg-slate-800 text-text border border-border rounded-lg text-sm font-medium transition cursor-pointer flex items-center gap-2 shadow-sm"
           >
             <FolderArchive className="w-4 h-4 text-text-muted" />
-            <span>Saved Reports</span>
-            <span className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded bg-bg text-text-muted border border-border">
-              {savedReportsCount}
-            </span>
+            <span>Saved Reports ({savedReportsCount})</span>
           </button>
 
           <button
             type="button"
             onClick={onGenerateReport}
             disabled={!isAllStamped || savingReport}
-            className={`min-h-[44px] px-5 rounded-lg text-sm font-semibold transition cursor-pointer flex items-center justify-center gap-2 whitespace-nowrap shadow-sm ${
+            className={`min-h-[44px] h-11 px-[20px] rounded-lg text-sm font-semibold transition cursor-pointer flex items-center justify-center gap-2 whitespace-nowrap shadow-sm ${
               isAllStamped && !savingReport
-                ? 'bg-accent hover:bg-accent-hover text-white'
+                ? 'bg-[#4F46E5] hover:bg-[#4338CA] text-white'
                 : 'bg-[#E5E7EB] text-[#6B7280] dark:bg-[#334155] dark:text-[#9CA3AF] cursor-not-allowed'
             }`}
           >

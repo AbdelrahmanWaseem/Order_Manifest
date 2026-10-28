@@ -58,7 +58,7 @@ export default function TopBar({
       label: 'Pending',
       lightBg: 'bg-[#FEF3C7]',
       lightText: 'text-[#92400E]',
-      darkBg: 'dark:bg-[#451A03]',
+      darkBg: 'dark:bg-[#78350F]',
       darkText: 'dark:text-[#FDE68A]',
       activeRing: 'ring-2 ring-amber-500 font-semibold',
     },
@@ -77,7 +77,7 @@ export default function TopBar({
       lightBg: 'bg-[#DBEAFE]',
       lightText: 'text-[#1E40AF]',
       darkBg: 'dark:bg-[#1E3A8A]',
-      darkText: 'dark:text-[#BFDBFE]',
+      darkText: 'dark:text-[#DBEAFE]',
       activeRing: 'ring-2 ring-blue-500 font-semibold',
     },
     {

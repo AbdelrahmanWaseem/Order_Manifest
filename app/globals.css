@@ -49,20 +49,20 @@ html.dark {
   --accent-hover: #6366F1;
 
   /* Status soft tints darkened for dark theme */
-  --status-pending-bg: #451A03;
+  --status-pending-bg: #78350F;
   --status-pending-text: #FDE68A;
   --status-ready-bg: #14532D;
   --status-ready-text: #BBF7D0;
   --status-ready-border: #166534;
-  --status-ready-card-bg: #052E16;
+  --status-ready-card-bg: #14532D;
   --status-incoming-bg: #1E3A8A;
-  --status-incoming-text: #BFDBFE;
+  --status-incoming-text: #DBEAFE;
   --status-incoming-border: #1E40AF;
-  --status-incoming-card-bg: #172554;
+  --status-incoming-card-bg: #1E3A8A;
   --status-missing-bg: #7F1D1D;
   --status-missing-text: #FECACA;
   --status-missing-border: #991B1B;
-  --status-missing-card-bg: #450A0A;
+  --status-missing-card-bg: #7F1D1D;
 
   /* Form and UI elements */
   --input-bg: #1E293B;

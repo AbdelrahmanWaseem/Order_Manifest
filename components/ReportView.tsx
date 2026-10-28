@@ -21,7 +21,7 @@ export default function ReportView({ report, onEditBatch, onDeleteReport }: Repo
         key: 'incomplete',
         label: 'Needs review',
         border: 'border-l-amber-500',
-        badge: 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#451A03] dark:text-[#FDE68A]',
+        badge: 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#78350F] dark:text-[#FDE68A]',
       };
     }
     if (statuses.every((s) => s === 'ready')) {
@@ -44,7 +44,7 @@ export default function ReportView({ report, onEditBatch, onDeleteReport }: Repo
       key: 'incoming',
       label: 'Waiting on stock',
       border: 'border-l-blue-500',
-      badge: 'bg-[#DBEAFE] text-[#1E40AF] dark:bg-[#1E3A8A] dark:text-[#BFDBFE]',
+      badge: 'bg-[#DBEAFE] text-[#1E40AF] dark:bg-[#1E3A8A] dark:text-[#DBEAFE]',
     };
   };
 
@@ -97,9 +97,9 @@ export default function ReportView({ report, onEditBatch, onDeleteReport }: Repo
   };
 
   const pillClassMap: Record<string, string> = {
-    pending: 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#451A03] dark:text-[#FDE68A]',
+    pending: 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#78350F] dark:text-[#FDE68A]',
     ready: 'bg-[#DCFCE7] text-[#166534] dark:bg-[#14532D] dark:text-[#BBF7D0]',
-    incoming: 'bg-[#DBEAFE] text-[#1E40AF] dark:bg-[#1E3A8A] dark:text-[#BFDBFE]',
+    incoming: 'bg-[#DBEAFE] text-[#1E40AF] dark:bg-[#1E3A8A] dark:text-[#DBEAFE]',
     missing: 'bg-[#FEE2E2] text-[#991B1B] dark:bg-[#7F1D1D] dark:text-[#FECACA]',
   };
 
