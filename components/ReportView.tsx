@@ -121,21 +121,6 @@ export default function ReportView({ report, onEditBatch, onDeleteReport }: Repo
         </div>
       </div>
 
-      {/* Conflicts section if any */}
-      {report.conflicts && report.conflicts.length > 0 && (
-        <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-cream">
-          <div className="font-bold text-rose-400 mb-1 text-[13px]">
-            ⚠ Stock conflicts — same item marked Ready on more than one order
-          </div>
-          {report.conflicts.map((c) => (
-            <div key={c.key} className="mt-1 leading-relaxed text-stone-300">
-              <span className="font-semibold text-cream">{c.brand}</span> — {c.name} (sz {c.size}):{' '}
-              {c.orders.map((o) => `${o.orderId} (${o.customer})`).join(', ')}
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* Summary Grid - Eye comfortable frosted cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-7">
         <div className="bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-300 p-3.5 rounded-xl shadow-sm">

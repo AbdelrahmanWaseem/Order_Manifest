@@ -445,14 +445,8 @@ export default function ManualOrderModal({
                                 >
                                   <span>{v.size || v.title}</span>
                                   {v.color && <span className="text-stone-400">({v.color})</span>}
-                                  {v.inventoryQuantity !== null && (
-                                    <span
-                                      className={`text-[9.5px] px-1 rounded ${
-                                        v.inventoryQuantity > 0
-                                          ? 'text-emerald-400 bg-emerald-950/40'
-                                          : 'text-stone-500 bg-stone-900'
-                                      }`}
-                                    >
+                                  {v.inventoryQuantity !== null && v.inventoryQuantity > 0 && (
+                                    <span className="text-[9.5px] px-1 rounded text-stone-300 bg-ink-night-3 border border-ink-rule">
                                       {v.inventoryQuantity} in stock
                                     </span>
                                   )}
@@ -540,11 +534,11 @@ export default function ManualOrderModal({
                     </div>
                   </div>
 
-                  {item.inventoryQuantity !== null && (
+                  {item.inventoryQuantity !== null && item.inventoryQuantity > 0 && (
                     <div className="text-[10.5px] font-mono text-stone-400 flex items-center gap-1.5">
                       <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                      <span>Catalog Stock Level:</span>
-                      <strong className="text-cream">{item.inventoryQuantity} units available</strong>
+                      <span>Stock:</span>
+                      <strong className="text-cream">{item.inventoryQuantity} units</strong>
                     </div>
                   )}
                 </div>

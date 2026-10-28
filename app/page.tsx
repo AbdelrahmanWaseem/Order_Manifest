@@ -470,9 +470,6 @@ export default function OrderManifestApp() {
         onOpenManualOrder={() => setIsManualOrderOpen(true)}
       />
 
-      {/* Stock Conflict Warning Banner */}
-      <StockConflictBanner conflicts={conflicts} />
-
       {/* Board & Toolbar */}
       <div ref={boardRef}>
         {orders.length > 0 && (

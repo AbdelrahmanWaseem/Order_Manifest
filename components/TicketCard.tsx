@@ -114,25 +114,12 @@ export default function TicketCard({
             )}
           </div>
 
-          {/* Stock inventory indicator */}
-          {item.inventoryQuantity !== null && (
+          {/* Stock inventory indicator - no out-of-stock warnings */}
+          {item.inventoryQuantity !== null && item.inventoryQuantity > 0 && (
             <div className="mt-2 flex items-center gap-2 font-mono text-[11px] flex-wrap">
-              <span
-                className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${
-                  item.inventoryQuantity >= item.quantity
-                    ? 'bg-emerald-950/40 text-emerald-300 border-emerald-800/40'
-                    : item.inventoryQuantity > 0
-                    ? 'bg-amber-950/40 text-amber-300 border-amber-800/40'
-                    : 'bg-rose-950/40 text-rose-300 border-rose-800/40'
-                }`}
-              >
+              <span className="px-2 py-0.5 rounded text-[11px] font-semibold border bg-ink-night-3 text-stone-300 border-ink-rule">
                 Stock: {item.inventoryQuantity}
               </span>
-              {item.suggestReady && item.status === 'pending' && (
-                <span className="text-emerald-400 font-medium text-[11px]">
-                  &bull; Suggest Ready
-                </span>
-              )}
             </div>
           )}
         </div>

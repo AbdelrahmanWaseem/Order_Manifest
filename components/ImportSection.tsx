@@ -380,13 +380,6 @@ export default function ImportSection({
             </button>
           </form>
 
-          {browseError && (
-            <div className="p-3 bg-red-950/30 border border-stamp-missing rounded text-xs text-red-200 flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-stamp-missing shrink-0" />
-              <span>{browseError}</span>
-            </div>
-          )}
-
           {/* Orders list */}
           <div className="border border-ink-rule rounded bg-ink-night overflow-hidden max-h-[420px] overflow-y-auto">
             {(browseLoading || searchLoading || loadingAll) && recentOrders.length === 0 ? (
@@ -565,14 +558,6 @@ export default function ImportSection({
               Format: order numbers, with or without &quot;#&quot; — pasting auto-fetches
             </span>
           </div>
-        </div>
-      )}
-
-      {/* Not found notice */}
-      {notFound.length > 0 && (
-        <div className="mt-3 p-2.5 bg-[#a4392f]/15 border border-stamp-missing rounded text-xs text-[#e5b3ac]">
-          <span className="font-bold text-white">Not found in Shopify: </span>
-          {notFound.map((n) => (n.startsWith('Error:') ? n : '#' + n)).join(', ')} — double-check the order number.
         </div>
       )}
 
