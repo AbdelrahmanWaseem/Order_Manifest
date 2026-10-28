@@ -38,6 +38,8 @@ export default function OrderGroup({
   // Check if every item in this order is stamped (i.e. not pending)
   const allItemsStamped = order.items.length > 0 && order.items.every((i) => i.status !== 'pending');
   const allItemsReady = order.items.length > 0 && order.items.every((i) => i.status === 'ready');
+  const missingCount = order.items.filter((i) => i.status === 'missing').length;
+  const notReadyCount = order.items.filter((i) => i.status !== 'ready').length;
 
   // Allow collapsing when all items are stamped
   const [isManuallyExpanded, setIsManuallyExpanded] = useState<boolean | null>(null);
@@ -65,9 +67,15 @@ export default function OrderGroup({
               {order.id}
             </span>
 
-            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[#DCFCE7] text-[#166534] border border-[#BBF7D0] dark:bg-[#14532D] dark:text-[#BBF7D0] dark:border-[#166534] flex items-center gap-1">
-              ✓ All items ready
-            </span>
+            {allItemsReady ? (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[#DCFCE7] text-[#166534] border border-[#BBF7D0] dark:bg-[#14532D] dark:text-[#BBF7D0] dark:border-[#166534] flex items-center gap-1">
+                ✓ All items ready
+              </span>
+            ) : (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[#FEE2E2] text-[#991B1B] border border-[#FECACA] dark:bg-[#7F1D1D] dark:text-[#FECACA] dark:border-[#991B1B] flex items-center gap-1">
+                ({notReadyCount} item{notReadyCount > 1 ? 's' : ''} is missing)
+              </span>
+            )}
 
             <span className="text-xs text-text-muted tabular-nums hidden sm:inline-block">
               ({order.items.length} item{order.items.length > 1 ? 's' : ''})
@@ -150,12 +158,20 @@ export default function OrderGroup({
                     </span>
                   )}
 
-                  {/* All Items Stamped Badge */}
-                  {allItemsStamped && (
+                  {/* Status Badge: All items ready OR items missing */}
+                  {allItemsReady ? (
                     <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[#DCFCE7] text-[#166534] border border-[#BBF7D0] dark:bg-[#14532D] dark:text-[#BBF7D0] dark:border-[#166534] flex items-center gap-1">
-                      ✓ {allItemsReady ? 'All items ready' : 'All items stamped'}
+                      ✓ All items ready
                     </span>
-                  )}
+                  ) : allItemsStamped ? (
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[#FEE2E2] text-[#991B1B] border border-[#FECACA] dark:bg-[#7F1D1D] dark:text-[#FECACA] dark:border-[#991B1B] flex items-center gap-1">
+                      ({notReadyCount} item{notReadyCount > 1 ? 's' : ''} is missing)
+                    </span>
+                  ) : missingCount > 0 ? (
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[#FEE2E2] text-[#991B1B] border border-[#FECACA] dark:bg-[#7F1D1D] dark:text-[#FECACA] dark:border-[#991B1B] flex items-center gap-1">
+                      ({missingCount} item{missingCount > 1 ? 's' : ''} is missing)
+                    </span>
+                  ) : null}
                 </div>
 
                 {/* Sub-row metadata: phone, date, items count */}
