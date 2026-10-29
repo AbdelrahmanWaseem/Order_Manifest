@@ -9,11 +9,24 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   try {
     // 1. Try DB first
     try {
-      const report = await db.report.findUnique({
+      const row = await db.report.findUnique({
         where: { id: params.id },
       });
 
-      if (report) {
+      if (row) {
+        // The DB stores the full ReportSnapshot inside `snapshot`.
+        // Unwrap it so callers always get a proper ReportSnapshot shape.
+        const snapshot = row.snapshot as any;
+        const report =
+          snapshot && typeof snapshot === 'object' && snapshot.counts
+            ? snapshot
+            : {
+                id: row.id,
+                createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : row.createdAt,
+                orderCount: row.orderCount,
+                itemCount: row.itemCount,
+                ...snapshot,
+              };
         return NextResponse.json({ report });
       }
     } catch (dbErr) {
