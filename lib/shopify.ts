@@ -38,6 +38,7 @@ export interface ShopifyOrderSummary {
   totalPrice: string;
   customer: string;
   customerEmail?: string;
+  customerPhone?: string;
   tags?: string[];
   itemCount: number;
   items: ShopifyLineItem[];
@@ -232,6 +233,13 @@ function transformShopifyOrder(node: any): ShopifyOrderSummary {
     [node.customer?.firstName, node.customer?.lastName].filter(Boolean).join(' ') ||
     'Customer';
 
+  const customerPhone =
+    node.shippingAddress?.phone ||
+    node.customer?.phone ||
+    undefined;
+
+  const customerEmail = node.customer?.email || undefined;
+
   const items: ShopifyLineItem[] = (node.lineItems?.edges || []).map((edge: any) => {
     const li = edge.node;
     const variant = li.variant;
@@ -272,6 +280,8 @@ function transformShopifyOrder(node: any): ShopifyOrderSummary {
     fulfillmentStatus: node.displayFulfillmentStatus || 'UNFULFILLED',
     totalPrice: node.totalPriceSet?.shopMoney ? `${node.totalPriceSet.shopMoney.amount} ${node.totalPriceSet.shopMoney.currencyCode}` : '0.00 EGP',
     customer: customerName,
+    customerEmail,
+    customerPhone,
     itemCount: items.reduce((acc, it) => acc + it.quantity, 0),
     items,
   };
@@ -289,10 +299,18 @@ const ORDER_FIELDS = `
       currencyCode
     }
   }
+  customer {
+    displayName
+    firstName
+    lastName
+    email
+    phone
+  }
   shippingAddress {
     name
     firstName
     lastName
+    phone
   }
   lineItems(first: 50) {
     edges {
