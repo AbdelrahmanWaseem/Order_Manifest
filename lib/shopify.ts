@@ -217,7 +217,7 @@ async function shopifyGraphQL<T>(query: string, variables: Record<string, any> =
     throw new Error(`Shopify API error (${res.status}): ${errorText}`);
   }
 
-  if (json?.errors && json.errors.length > 0) {
+  if (json?.errors && json.errors.length > 0 && !json.data) {
     const msg = json.errors.map((e: any) => e.message).join('; ');
     throw new Error(`Shopify GraphQL error: ${msg}`);
   }
@@ -229,16 +229,15 @@ function transformShopifyOrder(node: any): ShopifyOrderSummary {
   const customerName =
     node.shippingAddress?.name ||
     [node.shippingAddress?.firstName, node.shippingAddress?.lastName].filter(Boolean).join(' ') ||
-    node.customer?.displayName ||
-    [node.customer?.firstName, node.customer?.lastName].filter(Boolean).join(' ') ||
     'Customer';
 
   const customerPhone =
+    node.phone ||
     node.shippingAddress?.phone ||
-    node.customer?.phone ||
+    node.billingAddress?.phone ||
     undefined;
 
-  const customerEmail = node.customer?.email || undefined;
+  const customerEmail = node.email || undefined;
 
   const items: ShopifyLineItem[] = (node.lineItems?.edges || []).map((edge: any) => {
     const li = edge.node;
@@ -291,6 +290,8 @@ const ORDER_FIELDS = `
   id
   name
   createdAt
+  email
+  phone
   displayFinancialStatus
   displayFulfillmentStatus
   totalPriceSet {
@@ -299,17 +300,13 @@ const ORDER_FIELDS = `
       currencyCode
     }
   }
-  customer {
-    displayName
-    firstName
-    lastName
-    email
-    phone
-  }
   shippingAddress {
     name
     firstName
     lastName
+    phone
+  }
+  billingAddress {
     phone
   }
   lineItems(first: 50) {

@@ -119,7 +119,8 @@ export default function ManualOrderModal({
         // Fill customer info
         if (found.customer) setCustomer(found.customer);
         if (found.customerEmail) setCustomerEmail(found.customerEmail);
-        if ((found as any).customerPhone) setCustomerPhone((found as any).customerPhone);
+        const phone = found.customerPhone || (found as any).phone || '';
+        if (phone) setCustomerPhone(phone);
         if (found.createdAt) setOrderDate(found.createdAt.split('T')[0]);
 
         // Fill items

@@ -258,7 +258,7 @@ export default function OrderManifestApp() {
       newOrders.push({
         id: summary.name,
         customer: summary.customer || 'Unknown Customer',
-        customerPhone: (summary as any).customerPhone || undefined,
+        customerPhone: summary.customerPhone || (summary as any).phone || undefined,
         customerEmail: summary.customerEmail,
         orderDate: summary.createdAt,
         fulfillmentStatus: summary.fulfillmentStatus,
