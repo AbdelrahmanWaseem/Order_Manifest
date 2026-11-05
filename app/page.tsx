@@ -451,6 +451,19 @@ export default function OrderManifestApp() {
     setOrders((prev) => prev.filter((o) => o.id !== orderId));
   };
 
+  const handleDeleteItem = (orderId: string, itemId: string) => {
+    setOrders((prev) =>
+      prev
+        .map((o) => {
+          if (o.id !== orderId) return o;
+          const remaining = o.items.filter((i) => i.id !== itemId);
+          if (remaining.length === 0) return null as any;
+          return { ...o, items: remaining };
+        })
+        .filter(Boolean)
+    );
+  };
+
   const handleDeleteReport = async (reportId: string) => {
     try {
       const res = await fetch(`/api/reports/${reportId}`, { method: 'DELETE' });
@@ -604,6 +617,7 @@ export default function OrderManifestApp() {
                   onSetNote={handleSetNote}
                   onMarkAllReady={handleMarkAllReady}
                   onRemoveOrder={handleRemoveOrder}
+                  onDeleteItem={handleDeleteItem}
                 />
               );
             })}

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ManifestItem, ItemStatus } from '@/types/manifest';
+import { Trash2 } from 'lucide-react';
 
 interface TicketCardProps {
   orderId: string;
@@ -9,6 +10,7 @@ interface TicketCardProps {
   onSetStatus: (orderId: string, itemId: string, status: ItemStatus) => void;
   onCycleStatus: (orderId: string, itemId: string) => void;
   onSetNote: (orderId: string, itemId: string, note: string) => void;
+  onDeleteItem: (orderId: string, itemId: string) => void;
 }
 
 export default function TicketCard({
@@ -17,6 +19,7 @@ export default function TicketCard({
   onSetStatus,
   onCycleStatus,
   onSetNote,
+  onDeleteItem,
 }: TicketCardProps) {
   const isReady = item.status === 'ready';
   const isIncoming = item.status === 'incoming';
@@ -70,7 +73,17 @@ export default function TicketCard({
               )}
             </div>
           ) : (
-            <div className="text-xs text-text-muted font-medium">Pending status</div>
+            <div className="flex items-center justify-between w-full">
+              <div className="text-xs text-text-muted font-medium">Pending status</div>
+              <button
+                type="button"
+                onClick={() => onDeleteItem(orderId, item.id)}
+                className="text-text-muted hover:text-red-500 transition cursor-pointer p-0.5 rounded"
+                title="Delete this item"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
           )}
         </div>
 
@@ -122,12 +135,12 @@ export default function TicketCard({
           className="w-full h-9 px-2.5 text-xs bg-surface border border-border rounded-md text-text placeholder-[#9CA3AF] focus:border-accent"
         />
 
-        {/* Action Buttons: 3 in a row, 36px high, 14px font, 1px border */}
-        <div className="grid grid-cols-3 gap-1.5">
+        {/* Action Buttons: 3 status + delete */}
+        <div className="grid grid-cols-4 gap-1.5">
           <button
             type="button"
             onClick={() => onSetStatus(orderId, item.id, 'ready')}
-            className={`h-[36px] min-h-[36px] text-[14px] rounded-md transition cursor-pointer flex items-center justify-center ${
+            className={`h-[36px] min-h-[36px] text-[13px] rounded-md transition cursor-pointer flex items-center justify-center ${
               isReady
                 ? 'bg-[#DCFCE7] text-[#166534] border border-[#86EFAC] dark:bg-[#166534] dark:text-[#BBF7D0] dark:border-[#22C55E] font-bold'
                 : 'bg-surface dark:bg-[#1E293B] border border-border text-text hover:bg-slate-50 dark:hover:bg-slate-800 font-medium'
@@ -139,7 +152,7 @@ export default function TicketCard({
           <button
             type="button"
             onClick={() => onSetStatus(orderId, item.id, 'incoming')}
-            className={`h-[36px] min-h-[36px] text-[14px] rounded-md transition cursor-pointer flex items-center justify-center ${
+            className={`h-[36px] min-h-[36px] text-[13px] rounded-md transition cursor-pointer flex items-center justify-center ${
               isIncoming
                 ? 'bg-[#DBEAFE] text-[#1E40AF] border border-[#93C5FD] dark:bg-[#1E40AF] dark:text-[#DBEAFE] dark:border-[#3B82F6] font-bold'
                 : 'bg-surface dark:bg-[#1E293B] border border-border text-text hover:bg-slate-50 dark:hover:bg-slate-800 font-medium'
@@ -151,13 +164,22 @@ export default function TicketCard({
           <button
             type="button"
             onClick={() => onSetStatus(orderId, item.id, 'missing')}
-            className={`h-[36px] min-h-[36px] text-[14px] rounded-md transition cursor-pointer flex items-center justify-center ${
+            className={`h-[36px] min-h-[36px] text-[13px] rounded-md transition cursor-pointer flex items-center justify-center ${
               isMissing
                 ? 'bg-[#FEE2E2] text-[#991B1B] border border-[#FCA5A5] dark:bg-[#991B1B] dark:text-[#FECACA] dark:border-[#EF4444] font-bold'
                 : 'bg-surface dark:bg-[#1E293B] border border-border text-text hover:bg-slate-50 dark:hover:bg-slate-800 font-medium'
             }`}
           >
             Missing
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onDeleteItem(orderId, item.id)}
+            className="h-[36px] min-h-[36px] rounded-md border border-border bg-surface dark:bg-[#1E293B] hover:bg-red-50 dark:hover:bg-red-950/20 hover:border-red-200 dark:hover:border-red-800 text-text-muted hover:text-red-600 dark:hover:text-red-400 transition cursor-pointer flex items-center justify-center"
+            title="Delete item"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>

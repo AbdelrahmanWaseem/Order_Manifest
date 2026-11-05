@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ManifestOrder } from '@/types/manifest';
 import { ShopifyProductSummary, ShopifyProductVariantSummary } from '@/lib/shopify';
-import { Plus, Trash2, Search, Loader2, CheckCircle2, X } from 'lucide-react';
+import { Plus, Trash2, Search, Loader2, CheckCircle2, X, Zap } from 'lucide-react';
 
 interface ManualOrderItemForm {
   id: string;
@@ -57,6 +57,11 @@ export default function ManualOrderModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Order number Shopify lookup
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupSuccess, setLookupSuccess] = useState(false);
+  const orderLookupTimeout = useRef<NodeJS.Timeout | null>(null);
+
   // Search catalog state per item
   const [catalogQuery, setCatalogQuery] = useState('');
   const [catalogResults, setCatalogResults] = useState<ShopifyProductSummary[]>([]);
@@ -86,8 +91,63 @@ export default function ManualOrderModal({
       ]);
       setError(null);
       setActiveCatalogItemIdx(null);
+      setLookupSuccess(false);
     }
   }, [isOpen]);
+
+  // Auto-lookup Shopify order when order number is typed
+  const handleOrderNumberChange = (val: string) => {
+    setOrderNumber(val);
+    setLookupSuccess(false);
+    if (orderLookupTimeout.current) clearTimeout(orderLookupTimeout.current);
+
+    const cleaned = val.trim().replace(/^#/, '');
+    if (!cleaned || cleaned.length < 3) return;
+
+    orderLookupTimeout.current = setTimeout(async () => {
+      setLookupLoading(true);
+      try {
+        const res = await fetch('/api/shopify/lookup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ numbers: [cleaned] }),
+        });
+        const data = await res.json();
+        const found = data.orders?.[0];
+        if (!found) return;
+
+        // Fill customer info
+        if (found.customer) setCustomer(found.customer);
+        if (found.customerEmail) setCustomerEmail(found.customerEmail);
+        if ((found as any).customerPhone) setCustomerPhone((found as any).customerPhone);
+        if (found.createdAt) setOrderDate(found.createdAt.split('T')[0]);
+
+        // Fill items
+        if (Array.isArray(found.items) && found.items.length > 0) {
+          setItems(
+            found.items.map((it: any, idx: number) => ({
+              id: `item-shopify-${idx}-${Date.now()}`,
+              name: it.name || '',
+              brand: it.brand || 'Essentials EG',
+              size: it.size || 'M',
+              color: it.color || '',
+              sku: it.sku || '',
+              quantity: it.quantity || 1,
+              inventoryQuantity: it.inventoryQuantity ?? null,
+              productId: it.productId,
+              variantId: it.variantId,
+            }))
+          );
+        }
+
+        setLookupSuccess(true);
+      } catch {
+        // silent
+      } finally {
+        setLookupLoading(false);
+      }
+    }, 600);
+  };
 
   const handleCatalogSearch = (query: string) => {
     setCatalogQuery(query);
@@ -332,13 +392,24 @@ export default function ManualOrderModal({
                 <label className="block text-xs font-medium text-text mb-1">
                   Order # / Reference <span className="text-text-muted font-normal">(auto MAN-XXXX if blank)</span>
                 </label>
-                <input
-                  type="text"
-                  placeholder="e.g. MAN-1005"
-                  value={orderNumber}
-                  onChange={(e) => setOrderNumber(e.target.value)}
-                  className="w-full h-10 bg-surface border border-border rounded-lg px-3 text-sm text-text placeholder-[#9CA3AF] focus:border-accent tabular-nums"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="e.g. 3421 — auto-fills from Shopify"
+                    value={orderNumber}
+                    onChange={(e) => handleOrderNumberChange(e.target.value)}
+                    className="w-full h-10 bg-surface border border-border rounded-lg px-3 pr-9 text-sm text-text placeholder-[#9CA3AF] focus:border-accent tabular-nums"
+                  />
+                  <div className="absolute right-3 top-3 pointer-events-none">
+                    {lookupLoading && <Loader2 className="w-4 h-4 animate-spin text-accent" />}
+                    {lookupSuccess && !lookupLoading && <Zap className="w-4 h-4 text-emerald-500" />}
+                  </div>
+                </div>
+                {lookupSuccess && (
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 font-medium">
+                    ✓ Order info filled from Shopify
+                  </p>
+                )}
               </div>
 
               <div>

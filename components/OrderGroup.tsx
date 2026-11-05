@@ -16,6 +16,7 @@ interface OrderGroupProps {
   onSetNote: (orderId: string, itemId: string, note: string) => void;
   onMarkAllReady: (orderId: string) => void;
   onRemoveOrder: (orderId: string) => void;
+  onDeleteItem: (orderId: string, itemId: string) => void;
 }
 
 export default function OrderGroup({
@@ -28,6 +29,7 @@ export default function OrderGroup({
   onSetNote,
   onMarkAllReady,
   onRemoveOrder,
+  onDeleteItem,
 }: OrderGroupProps) {
   if (filteredItems.length === 0) return null;
 
@@ -254,6 +256,7 @@ export default function OrderGroup({
                 onSetStatus={onSetStatus}
                 onCycleStatus={onCycleStatus}
                 onSetNote={onSetNote}
+                onDeleteItem={onDeleteItem}
               />
             ))}
           </div>
