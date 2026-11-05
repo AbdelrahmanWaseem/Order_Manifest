@@ -27,6 +27,7 @@ interface Toast {
   id: string;
   message: string;
   type: 'success' | 'error' | 'info';
+  onUndo?: () => void;
 }
 
 export default function OrderManifestApp() {
@@ -41,13 +42,14 @@ export default function OrderManifestApp() {
   const [savedReportsCount, setSavedReportsCount] = useState(0);
   const [hideBanner, setHideBanner] = useState(true);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const undoSnapshotRef = useRef<ManifestOrder[] | null>(null);
 
   const reportRef = useRef<HTMLDivElement>(null);
   const boardRef = useRef<HTMLDivElement>(null);
 
-  const addToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+  const addToast = (message: string, type: 'success' | 'error' | 'info' = 'success', onUndo?: () => void) => {
     const id = `${Date.now()}-${Math.random()}`;
-    setToasts((prev) => [...prev, { id, message, type }]);
+    setToasts((prev) => [...prev, { id, message, type, onUndo }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 3500);
@@ -452,6 +454,9 @@ export default function OrderManifestApp() {
   };
 
   const handleDeleteItem = (orderId: string, itemId: string) => {
+    // Save snapshot for undo
+    undoSnapshotRef.current = JSON.parse(JSON.stringify(orders));
+
     setOrders((prev) =>
       prev
         .map((o) => {
@@ -462,6 +467,13 @@ export default function OrderManifestApp() {
         })
         .filter(Boolean)
     );
+
+    addToast('Item deleted', 'info', () => {
+      if (undoSnapshotRef.current) {
+        setOrders(undoSnapshotRef.current);
+        undoSnapshotRef.current = null;
+      }
+    });
   };
 
   const handleDeleteReport = async (reportId: string) => {
@@ -504,6 +516,18 @@ export default function OrderManifestApp() {
               <CheckCircle2 className="w-4 h-4 shrink-0" />
             )}
             <span>{toast.message}</span>
+            {toast.onUndo && (
+              <button
+                type="button"
+                onClick={() => {
+                  toast.onUndo!();
+                  setToasts((prev) => prev.filter((t) => t.id !== toast.id));
+                }}
+                className="ml-1 underline font-semibold hover:opacity-80 cursor-pointer whitespace-nowrap"
+              >
+                Undo
+              </button>
+            )}
           </div>
         ))}
       </div>
